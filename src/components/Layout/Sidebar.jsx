@@ -55,15 +55,17 @@ const Sidebar = ({ isOpen, onClose }) => {
                 }`
               }
             >
-              <Icon
-                size={20}
-                className={`${
-                  isActive
-                    ? 'text-emerald-500'
-                    : color
-                } transition-colors duration-200`}
-              />
-              <span>{label}</span>
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    size={20}
+                    className={`${
+                      isActive ? 'text-emerald-500' : color
+                    } transition-colors	duration-200`}
+                  />
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           </li>
         ))}
@@ -86,14 +88,14 @@ const Sidebar = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-white/95 dark:bg-gray-900/95 border-r border-gray-200 dark:border-gray-800 pt-[env(safe-area-inset-top)]">
-        <div className="h-full flex flex-col">
-          <div className="px-4 pt-4 pb-2">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-white/95 dark:bg-gray-900/95 border-r border-gray-200 dark:border-gray-800">
+        <div className="h-full flex flex-col pt-4">
+          <div className="px-4 pb-2">
             <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
               Nutrio
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Smart nutrition & planning
+              Your daily nutrition hub
             </p>
           </div>
           {renderNavList()}
@@ -122,7 +124,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               exit={{ x: -320 }}
               transition={{ type: 'tween', duration: 0.25 }}
             >
-              <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex	items-center	justify-between px-4 pt-5 pb-3 border-b border-gray-200 dark:border-gray-800">
                 <div>
                   <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                     Nutrio
@@ -147,7 +149,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* Content offset on desktop */}
+      {/* Content offset	on desktop */}
       <div className="hidden lg:block lg:w-64 lg:flex-shrink-0" />
     </>
   );

@@ -43,7 +43,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Dark mode preference
     const darkMode = localStorage.getItem('darkMode') === 'true';
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -51,9 +50,9 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
 
-    // Fallback timer in case onLoadingComplete never fires
-    const timer = setTimeout(() => setIsLoading(false), 4000);
-    return () => clearTimeout(timer);
+    // Safety timeout so we NEVER get stuck on loader
+    const timeout = setTimeout(() => setIsLoading(false), 5000);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (

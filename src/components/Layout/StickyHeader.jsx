@@ -3,15 +3,9 @@ import { Menu } from 'lucide-react';
 
 const StickyHeader = ({ title, onMenuClick, children }) => {
   return (
-    <header
-      className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
-      style={{
-        minHeight: '60px',
-        paddingTop: 'max(12px, env(safe-area-inset-top))',
-      }}
-    >
-      <div className="h-full px-4 flex items-center justify-between">
-        {/* Left side - Hamburger + Title */}
+    <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 backdrop-blur">
+      <div className="px-4 py-3 flex items-center justify-between">
+        {/* Left: menu + title */}
         <div className="flex items-center space-x-3">
           <button
             onClick={onMenuClick}
@@ -21,12 +15,12 @@ const StickyHeader = ({ title, onMenuClick, children }) => {
             <Menu size={24} className="text-gray-700 dark:text-gray-200" />
           </button>
 
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
             {title}
           </h1>
         </div>
 
-        {/* Right side - Optional actions */}
+        {/* Right: optional actions */}
         {children && (
           <div className="flex items-center space-x-2">
             {children}
