@@ -3,11 +3,11 @@ import { Menu } from 'lucide-react';
 
 const StickyHeader = ({ title, onMenuClick, children }) => {
   return (
-    <header 
+    <header
       className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
-      style={{ 
-        height: '60px',
-        paddingTop: 'max(0px, env(safe-area-inset-top))'
+      style={{
+        minHeight: '60px',
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
       }}
     >
       <div className="h-full px-4 flex items-center justify-between">
@@ -20,7 +20,7 @@ const StickyHeader = ({ title, onMenuClick, children }) => {
           >
             <Menu size={24} className="text-gray-700 dark:text-gray-200" />
           </button>
-          
+
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
             {title}
           </h1>

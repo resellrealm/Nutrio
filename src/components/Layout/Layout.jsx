@@ -28,7 +28,7 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sticky Header - Always visible */}
-      <StickyHeader 
+      <StickyHeader
         title={getPageTitle(location.pathname)}
         onMenuClick={toggleSidebar}
       />
@@ -36,8 +36,8 @@ const Layout = () => {
       {/* Sidebar Drawer */}
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
-      {/* Main Content - Scrolls under header */}
-      <main className="p-4 sm:p-6 lg:p-8">
+      {/* Main Content */}
+      <main className="pt-6 px-4 pb-4 sm:pt-8 sm:px-6 sm:pb-6 lg:pt-10 lg:px-8 lg:pb-8">
         <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>
