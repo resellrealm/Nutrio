@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,26 +12,81 @@ import {
   User,
   LogOut,
   X,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
+  // Compute premium status safely from localStorage
+  const isPremium = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const tier = localStorage.getItem('planTier');
+    return tier === 'premium';
+  }, []);
+
   // Navigation items – paths aligned with App.jsx routes
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', color: 'text-emerald-500' },
-    { path: '/meal-analyzer', icon: Camera, label: 'Analyze Meal', color: 'text-cyan-500' },
-    { path: '/meal-planner', icon: ChefHat, label: 'Meal Planner', color: 'text-purple-500' },
-    { path: '/goals', icon: Target, label: 'Goals', color: 'text-orange-500' },
-    { path: '/favourites', icon: Heart, label: 'Favourites', color: 'text-rose-500' },
-    { path: '/achievements', icon: Trophy, label: 'Achievements', color: 'text-amber-500' },
-    { path: '/history', icon: HistoryIcon, label: 'History', color: 'text-blue-500' },
-    { path: '/account', icon: User, label: 'Account', color: 'text-gray-500' },
+    {
+      path: '/dashboard',
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      color: 'text-emerald-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/meal-analyzer',
+      icon: Camera,
+      label: 'Analyze Meal',
+      color: 'text-cyan-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/meal-planner',
+      icon: ChefHat,
+      label: 'Meal Planner',
+      color: 'text-purple-500',
+      premiumOnly: true, // premium only
+    },
+    {
+      path: '/goals',
+      icon: Target,
+      label: 'Goals',
+      color: 'text-orange-500',
+      premiumOnly: true, // premium only
+    },
+    {
+      path: '/favourites',
+      icon: Heart,
+      label: 'Favourites',
+      color: 'text-rose-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/achievements',
+      icon: Trophy,
+      label: 'Achievements',
+      color: 'text-amber-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/history',
+      icon: HistoryIcon,
+      label: 'History',
+      color: 'text-blue-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/account',
+      icon: User,
+      label: 'Account',
+      color: 'text-gray-500',
+      premiumOnly: false,
+    },
   ];
 
   const handleLogout = () => {
-    // If you store auth info in localStorage, clear it here
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
     }
@@ -40,41 +95,59 @@ const Sidebar = ({ isOpen, onClose }) => {
     onClose && onClose();
   };
 
-  const handleNavClick = () => {
-    // Close sidebar on mobile after navigation
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      onClose && onClose();
+  // Handle clicking a nav item (premium gating + closing drawer)
+  const handleNavClick = (e, item, onItemClick) => {
+    const { premiumOnly } = item;
+
+    if (premiumOnly && !isPremium) {
+      e.preventDefault();
+      toast.error('🔒 Upgrade to Premium to unlock this feature!', {
+        duration: 3000,
+        icon: '👑',
+      });
+      return;
     }
+
+    // Close sidebar on mobile after navigation
+    if (onItemClick) onItemClick();
   };
 
   const renderNavList = (onItemClick) => (
     <nav className="flex-1 overflow-y-auto">
       <ul className="space-y-1 px-2 py-4">
-        {navItems.map(({ path, icon: Icon, label, color }) => (
-          <li key={path}>
-            <NavLink
-              to={path}
-              onClick={onItemClick}
-              className={({ isActive }) =>
-                `flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon
-                    size={20}
-                    className={`${color} transition-colors duration-200`}
-                  />
-                  <span>{label}</span>
-                </>
-              )}
-            </NavLink>
-          </li>
-        ))}
+        {navItems.map(({ path, icon: Icon, label, color, premiumOnly }) => {
+          const isLocked = premiumOnly && !isPremium;
+
+          return (
+            <li key={path}>
+              <NavLink
+                to={path}
+                onClick={(e) => handleNavClick(e, { premiumOnly }, onItemClick)}
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200'
+                      : isLocked
+                      ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70'
+                  }`
+                }
+                aria-disabled={isLocked ? 'true' : undefined}
+              >
+                {() => (
+                  <>
+                    <Icon
+                      size={20}
+                      className={`${color} transition-colors duration-200`}
+                    />
+                    <span className="flex-1">{label}</span>
+                    {isLocked && <Lock size={14} className="text-gray-400" />}
+                  </>
+                )}
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -90,6 +163,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       </button>
     </div>
   );
+
+  // Helper for closing sidebar on mobile
+  const closeOnMobile = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      onClose && onClose();
+    }
+  };
 
   return (
     <>
@@ -151,7 +231,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-            {renderNavList(handleNavClick)}
+            {renderNavList(closeOnMobile)}
             {renderFooter()}
           </motion.aside>
         )}
@@ -161,4 +241,3 @@ const Sidebar = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
-
