@@ -13,6 +13,8 @@ const Layout = () => {
       '/': 'Dashboard',
       '/analyze': 'Analyze Meal',
       '/meal-planner': 'Meal Planner',
+      '/grocery-list': 'Grocery List',
+      '/barcode': 'Scan Barcode',
       '/goals': 'Goals',
       '/favourites': 'Favourites',
       '/achievements': 'Achievements',
@@ -37,8 +39,14 @@ const Layout = () => {
       {/* Sidebar Drawer */}
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
-      {/* Main Content */}
-      <main className="pt-6 px-4 pb-4 sm:pt-8 sm:px-6 sm:pb-6 lg:pt-10 lg:px-8 lg:pb-8 lg:ml-64">
+      {/* Main Content with safe spacing for header */}
+      <main
+        className="px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8 lg:ml-64"
+        style={{
+          paddingTop: 'calc(var(--header-height, 60px) + 1.5rem)',
+          minHeight: 'calc(100vh - var(--header-height, 60px))'
+        }}
+      >
         <div className="max-w-7xl mx-auto">
           <Outlet key={location.pathname} />
         </div>

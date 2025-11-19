@@ -1,29 +1,65 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Sparkles, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { loginUser } from '../services/authService';
+import { setCredentials, setOnboardingComplete } from '../store/authSlice';
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate login
-    localStorage.setItem('token', 'demo-token');
-    localStorage.setItem('userName', formData.email.split('@')[0]);
-    localStorage.setItem('userLevel', '5');
-    localStorage.setItem('userPoints', '450');
-    localStorage.setItem('userStreak', '7');
-    // Set onboarding as complete for returning users
-    localStorage.setItem('onboardingComplete', 'true');
-    toast.success('Welcome back!');
-    navigate('/');
+
+    if (!formData.email || !formData.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await loginUser(formData.email, formData.password);
+
+      if (result.success) {
+        // Store auth data
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('onboardingComplete', result.onboardingComplete.toString());
+
+        // Update Redux
+        dispatch(setCredentials({
+          user: result.user,
+          token: result.token
+        }));
+
+        dispatch(setOnboardingComplete(result.onboardingComplete));
+
+        toast.success('Welcome back!');
+
+        // Navigate based on onboarding status
+        if (result.onboardingComplete) {
+          navigate('/');
+        } else {
+          navigate('/onboarding');
+        }
+      } else {
+        toast.error(result.error || 'Failed to login');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

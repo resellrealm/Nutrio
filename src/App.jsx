@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { store } from './store/store';
 
 // Layout
@@ -10,8 +10,11 @@ import Layout from './components/Layout/Layout';
 // Loading
 import LoadingScreen from './components/LoadingScreen';
 
+// Error Boundary
+import ErrorBoundary from './components/ErrorBoundary';
+
 // Pages
-import Onboarding from './pages/Onboarding';
+import OnboardingFlowV2 from './components/OnboardingV2/OnboardingFlowV2';
 import Dashboard from './pages/Dashboard';
 import MealAnalyzer from './pages/MealAnalyzer';
 import MealPlanner from './pages/MealPlanner';
@@ -20,6 +23,8 @@ import Favourites from './pages/Favourites';
 import Achievements from './pages/Achievements';
 import History from './pages/History';
 import Account from './pages/Account';
+import GroceryList from './pages/GroceryList';
+import BarcodeScanner from './pages/BarcodeScanner';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -32,7 +37,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  if (!hasCompletedOnboarding) {
+  if (!hasCompletedOnboarding || hasCompletedOnboarding === 'false') {
     return <Navigate to="/onboarding" />;
   }
 
@@ -57,61 +62,74 @@ function App() {
 
   return (
     <Provider store={store}>
-      {isLoading ? (
-        <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />
-      ) : (
-        <Router>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#1f2937',
-                  color: '#fff',
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#7fc7a1',
-                    secondary: '#fff',
+      <ErrorBoundary>
+        {isLoading ? (
+          <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />
+        ) : (
+          <Router>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: '#1f2937',
+                    color: '#fff',
                   },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
+                  success: {
+                    iconTheme: {
+                      primary: '#7fc7a1',
+                      secondary: '#fff',
+                    },
                   },
-                },
-              }}
-            />
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+                  error: {
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                  },
+                }}
+              />
+              <Routes>
+                {/* Auth Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/onboarding" element={<OnboardingFlowV2 />} />
 
-              {/* Protected Routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="analyze" element={<MealAnalyzer />} />
-                <Route path="meal-planner" element={<MealPlanner />} />
-                <Route path="goals" element={<Goals />} />
-                <Route path="favourites" element={<Favourites />} />
-                <Route path="achievements" element={<Achievements />} />
-                <Route path="history" element={<History />} />
-                <Route path="account" element={<Account />} />
-              </Route>
-            </Routes>
-          </div>
-        </Router>
-      )}
+                {/* Barcode Scanner - Full Screen (Outside Layout) */}
+                <Route
+                  path="/barcode"
+                  element={
+                    <ProtectedRoute>
+                      <BarcodeScanner />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Protected Routes */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="analyze" element={<MealAnalyzer />} />
+                  <Route path="meal-planner" element={<MealPlanner />} />
+                  <Route path="grocery-list" element={<GroceryList />} />
+                  <Route path="goals" element={<Goals />} />
+                  <Route path="favourites" element={<Favourites />} />
+                  <Route path="achievements" element={<Achievements />} />
+                  <Route path="history" element={<History />} />
+                  <Route path="account" element={<Account />} />
+                </Route>
+              </Routes>
+            </div>
+          </Router>
+        )}
+      </ErrorBoundary>
     </Provider>
   );
 }

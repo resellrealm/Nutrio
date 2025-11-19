@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Sparkles, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { registerUser } from '../services/authService';
+import { setCredentials } from '../store/authSlice';
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,18 +19,54 @@ const Register = () => {
     confirmPassword: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match!');
       return;
     }
-    // Simulate registration
-    localStorage.setItem('token', 'demo-token');
-    localStorage.setItem('userName', formData.name);
-    localStorage.setItem('userEmail', formData.email);
-    toast.success('Account created successfully!');
-    navigate('/onboarding');
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!formData.email || !formData.password || !formData.name) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await registerUser(formData.email, formData.password, formData.name);
+
+      if (result.success) {
+        // Store auth data
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('onboardingComplete', 'false');
+
+        // Update Redux
+        dispatch(setCredentials({
+          user: result.user,
+          token: result.token
+        }));
+
+        toast.success('Account created successfully! Let\'s set up your profile.');
+
+        // Navigate to onboarding
+        navigate('/onboarding');
+      } else {
+        toast.error(result.error || 'Failed to create account');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
