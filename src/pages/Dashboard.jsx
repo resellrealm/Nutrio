@@ -71,7 +71,20 @@ const Dashboard = () => {
   const [macroData, setMacroData] = useState([]);
   const [mealTypeData, setMealTypeData] = useState([]);
 
+
   const fetchDashboardData = useCallback(async () => {
+
+  useEffect(() => {
+    if (userId) {
+      fetchDashboardData();
+    } else {
+      // No user ID available, stop loading
+      setLoading(false);
+    }
+  }, [userId]);
+
+  const fetchDashboardData = async () => {
+main
     setLoading(true);
     setError(null);
 
