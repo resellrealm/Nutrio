@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Menu } from 'lucide-react';
 
 const StickyHeader = ({ title, onMenuClick, isSidebarOpen, children }) => {
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    // Update CSS variable for header height on mount and resize
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
+    };
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
+
   return (
     <header
-      className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 backdrop-blur"
+      ref={headerRef}
+      className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 backdrop-blur safe-area-top"
       style={{
-        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
+        paddingTop: 'max(env(safe-area-inset-top), 8px)',
         minHeight: '60px',
       }}
     >

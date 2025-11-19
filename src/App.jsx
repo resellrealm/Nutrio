@@ -23,6 +23,8 @@ import Favourites from './pages/Favourites';
 import Achievements from './pages/Achievements';
 import History from './pages/History';
 import Account from './pages/Account';
+import GroceryList from './pages/GroceryList';
+import BarcodeScanner from './pages/BarcodeScanner';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -94,6 +96,16 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/onboarding" element={<OnboardingFlowV2 />} />
 
+                {/* Barcode Scanner - Full Screen (Outside Layout) */}
+                <Route
+                  path="/barcode"
+                  element={
+                    <ProtectedRoute>
+                      <BarcodeScanner />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Protected Routes */}
                 <Route
                   path="/"
@@ -106,6 +118,7 @@ function App() {
                   <Route index element={<Dashboard />} />
                   <Route path="analyze" element={<MealAnalyzer />} />
                   <Route path="meal-planner" element={<MealPlanner />} />
+                  <Route path="grocery-list" element={<GroceryList />} />
                   <Route path="goals" element={<Goals />} />
                   <Route path="favourites" element={<Favourites />} />
                   <Route path="achievements" element={<Achievements />} />

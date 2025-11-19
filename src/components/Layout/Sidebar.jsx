@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Camera,
   ChefHat,
+  ShoppingCart,
   Target,
   Heart,
   Trophy,
@@ -48,6 +49,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: 'Meal Planner',
       color: 'text-purple-500',
       premiumOnly: true, // premium only
+    },
+    {
+      path: '/grocery-list',
+      icon: ShoppingCart,
+      label: 'Grocery List',
+      color: 'text-green-500',
+      premiumOnly: false,
     },
     {
       path: '/goals',
