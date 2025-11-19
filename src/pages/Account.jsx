@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   User,
   Mail,
   Lock,
@@ -9,7 +9,6 @@ import {
   Sun,
   Shield,
   Download,
-  Settings as SettingsIcon,
   CreditCard,
   Trash2,
   Edit2,
@@ -113,7 +112,8 @@ const Account = () => {
     a.href = url;
     a.download = `nutrio-data-${Date.now()}.json`;
     a.click();
-    
+    URL.revokeObjectURL(url);
+
     toast.success('Data exported successfully!');
   };
 

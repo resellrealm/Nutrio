@@ -1,6 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import onboardingReducer from './onboardingSlice';
+import nutritionReducer from './nutritionSlice';
+import achievementsReducer from './achievementsSlice';
 
 // Load persisted onboarding state from localStorage
 const loadOnboardingState = () => {
@@ -20,6 +22,8 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     onboarding: onboardingReducer,
+    nutrition: nutritionReducer,
+    achievements: achievementsReducer,
   },
   preloadedState: {
     onboarding: loadOnboardingState()

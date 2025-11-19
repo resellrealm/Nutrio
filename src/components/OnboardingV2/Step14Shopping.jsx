@@ -28,11 +28,11 @@ const Step14Shopping = () => {
   ];
 
   const toggleStore = (storeId) => {
-    const stores = localData.preferredStores.includes(storeId)
+    const updatedStores = localData.preferredStores.includes(storeId)
       ? localData.preferredStores.filter(s => s !== storeId)
       : [...localData.preferredStores, storeId];
 
-    const newData = { ...localData, preferredStores: stores };
+    const newData = { ...localData, preferredStores: updatedStores };
     setLocalData(newData);
     dispatch(setShoppingPreferences(newData));
   };

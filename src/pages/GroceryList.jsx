@@ -79,6 +79,7 @@ const GroceryList = () => {
   const handleToggleItem = async (itemId, checked) => {
     if (!currentList) return;
 
+    const previousList = { ...currentList, items: [...currentList.items] };
     const optimisticUpdate = {
       ...currentList,
       items: currentList.items.map(item =>
@@ -86,11 +87,10 @@ const GroceryList = () => {
       )
     };
     setCurrentList(optimisticUpdate);
-
     const result = await updateGroceryItem(currentList.id, itemId, { checked });
     if (!result.success) {
       // Revert on error
-      setCurrentList(currentList);
+      setCurrentList(previousList);
       toast.error('Failed to update item');
     }
   };
@@ -98,6 +98,7 @@ const GroceryList = () => {
   const handlePurchaseItem = async (itemId) => {
     if (!currentList) return;
 
+    const previousList = { ...currentList, items: [...currentList.items] };
     const optimisticUpdate = {
       ...currentList,
       items: currentList.items.map(item =>
@@ -105,10 +106,9 @@ const GroceryList = () => {
       )
     };
     setCurrentList(optimisticUpdate);
-
     const result = await updateGroceryItem(currentList.id, itemId, { purchased: true, checked: true });
     if (!result.success) {
-      setCurrentList(currentList);
+      setCurrentList(previousList);
       toast.error('Failed to mark as purchased');
     }
   };

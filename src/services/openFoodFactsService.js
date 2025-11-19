@@ -169,7 +169,7 @@ export const getProductsByCategory = async (category) => {
       }
     });
 
-    const products = response.data.products.map(product => ({
+    const products = (response.data.products || []).map(product => ({
       name: product.product_name || 'Unknown',
       brand: product.brands || '',
       barcode: product.code,

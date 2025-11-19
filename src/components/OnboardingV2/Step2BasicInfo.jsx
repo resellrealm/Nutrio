@@ -14,16 +14,16 @@ const Step2BasicInfo = () => {
     dateOfBirth: basicInfo.dateOfBirth || '',
     gender: basicInfo.gender || '',
     height: {
-      value: basicInfo.height.value || '',
-      unit: basicInfo.height.unit || 'cm'
+      value: basicInfo.height?.value || '',
+      unit: basicInfo.height?.unit || 'cm'
     },
     currentWeight: {
-      value: basicInfo.currentWeight.value || '',
-      unit: basicInfo.currentWeight.unit || 'kg'
+      value: basicInfo.currentWeight?.value || '',
+      unit: basicInfo.currentWeight?.unit || 'kg'
     },
     targetWeight: {
-      value: basicInfo.targetWeight.value || '',
-      unit: basicInfo.targetWeight.unit || 'kg'
+      value: basicInfo.targetWeight?.value || '',
+      unit: basicInfo.targetWeight?.unit || 'kg'
     }
   });
 

@@ -33,19 +33,19 @@ const Step16Cooking = () => {
   ];
 
   const toggleMethod = (method) => {
-    const methods = localData.preferredMethods.includes(method)
+    const updatedMethods = localData.preferredMethods.includes(method)
       ? localData.preferredMethods.filter(m => m !== method)
       : [...localData.preferredMethods, method];
-    const newData = { ...localData, preferredMethods: methods };
+    const newData = { ...localData, preferredMethods: updatedMethods };
     setLocalData(newData);
     dispatch(setCookingHabits(newData));
   };
 
   const toggleEquipment = (equip) => {
-    const equipment = localData.kitchenEquipment.includes(equip)
+    const updatedEquipment = localData.kitchenEquipment.includes(equip)
       ? localData.kitchenEquipment.filter(e => e !== equip)
       : [...localData.kitchenEquipment, equip];
-    const newData = { ...localData, kitchenEquipment: equipment };
+    const newData = { ...localData, kitchenEquipment: updatedEquipment };
     setLocalData(newData);
     dispatch(setCookingHabits(newData));
   };
