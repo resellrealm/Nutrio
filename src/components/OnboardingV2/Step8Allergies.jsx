@@ -74,7 +74,7 @@ const Step8Allergies = () => {
             type="text"
             value={customAllergy}
             onChange={(e) => setCustomAllergy(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAddCustom()}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddCustom()}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g., Avocado, Strawberries"
           />

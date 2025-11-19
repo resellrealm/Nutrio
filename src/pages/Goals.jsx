@@ -285,7 +285,7 @@ const Goals = () => {
                         value={tempGoals[macro].target}
                         onChange={(e) => setTempGoals({
                           ...tempGoals,
-                          [macro]: { ...tempGoals[macro], target: parseInt(e.target.value) }
+                          [macro]: { ...tempGoals[macro], target: parseInt(e.target.value) || 0 }
                         })}
                         disabled={!tempGoals[macro].enabled}
                         className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100"
@@ -314,7 +314,7 @@ const Goals = () => {
                         value={tempGoals[nutrient].target}
                         onChange={(e) => setTempGoals({
                           ...tempGoals,
-                          [nutrient]: { ...tempGoals[nutrient], target: parseInt(e.target.value) }
+                          [nutrient]: { ...tempGoals[nutrient], target: parseInt(e.target.value) || 0 }
                         })}
                         disabled={!tempGoals[nutrient].enabled}
                         className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100"

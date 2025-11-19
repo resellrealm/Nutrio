@@ -8,8 +8,7 @@ import {
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { getUserProfile } from '../services/userService';
 import { getDailyTotals, getWeeklySummary } from '../services/foodLogService';
@@ -71,20 +70,7 @@ const Dashboard = () => {
   const [macroData, setMacroData] = useState([]);
   const [mealTypeData, setMealTypeData] = useState([]);
 
-
   const fetchDashboardData = useCallback(async () => {
-
-  useEffect(() => {
-    if (userId) {
-      fetchDashboardData();
-    } else {
-      // No user ID available, stop loading
-      setLoading(false);
-    }
-  }, [userId]);
-
-  const fetchDashboardData = async () => {
-main
     setLoading(true);
     setError(null);
 

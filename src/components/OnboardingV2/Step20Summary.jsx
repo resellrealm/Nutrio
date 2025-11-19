@@ -43,8 +43,8 @@ const Step20Summary = () => {
             <p><strong>Name:</strong> {basicInfo.fullName || 'Not provided'}</p>
             <p><strong>Age:</strong> {basicInfo.age || 'Not calculated'} years</p>
             <p><strong>Gender:</strong> {basicInfo.gender?.replace('_', ' ') || 'Not provided'}</p>
-            <p><strong>Current Weight:</strong> {basicInfo.currentWeight.value} {basicInfo.currentWeight.unit}</p>
-            <p><strong>Target Weight:</strong> {basicInfo.targetWeight.value} {basicInfo.targetWeight.unit}</p>
+            <p><strong>Current Weight:</strong> {basicInfo.currentWeight?.value} {basicInfo.currentWeight?.unit}</p>
+            <p><strong>Target Weight:</strong> {basicInfo.targetWeight?.value} {basicInfo.targetWeight?.unit}</p>
           </div>
         </div>
 

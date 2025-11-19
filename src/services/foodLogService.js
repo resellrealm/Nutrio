@@ -10,8 +10,7 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp,
-  Timestamp
+  serverTimestamp
 } from 'firebase/firestore';
 
 /**
