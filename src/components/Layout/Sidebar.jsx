@@ -14,6 +14,7 @@ import {
   LogOut,
   X,
   Lock,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -55,6 +56,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: ShoppingCart,
       label: 'Grocery List',
       color: 'text-green-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/advanced-features',
+      icon: Sparkles,
+      label: 'Advanced Features',
+      color: 'text-purple-500',
       premiumOnly: false,
     },
     {

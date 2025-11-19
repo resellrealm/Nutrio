@@ -15,6 +15,7 @@ const Layout = () => {
       '/meal-planner': 'Meal Planner',
       '/grocery-list': 'Grocery List',
       '/barcode': 'Scan Barcode',
+      '/advanced-features': 'Advanced Features',
       '/goals': 'Goals',
       '/favourites': 'Favourites',
       '/achievements': 'Achievements',

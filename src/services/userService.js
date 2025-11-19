@@ -130,7 +130,64 @@ export const createUserProfile = async (userId, email) => {
         bmi: 0,
         tdee: 0,
         recommendedCalories: 0,
-        macros: { protein: 0, carbs: 0, fat: 0 }
+        dailyCalories: 0,
+        macros: { protein: 0, carbs: 0, fat: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }
+      },
+
+      // FEATURE 1: Monthly Check-In Preferences
+      monthlyCheckIn: {
+        enabled: true,
+        preferredDay: 'last', // 'first', 'last', or specific date number
+        specificDate: null,
+        priorityMetrics: ['weight', 'calories', 'consistency'],
+        lastCheckInDate: null,
+        nextCheckInDate: null
+      },
+
+      // FEATURE 2 & 4: Sustainability & Seasonal Eating
+      sustainability: {
+        preferSeasonal: true,
+        preferLocal: true,
+        importanceLevel: 3, // 1-5
+        trackEnvironmentalImpact: true
+      },
+
+      // FEATURE 5: Religious Diet Support
+      religiousDiet: {
+        religion: 'none', // 'none', 'islamic', 'jewish', 'hindu', 'buddhist', 'jain'
+        halal: {
+          certificationRequired: 'ingredients-only', // 'strict', 'preferred', 'ingredients-only'
+          observesRamadan: false,
+          prayerTimesAffectMeals: false
+        },
+        kosher: {
+          observanceLevel: 'basic', // 'strict', 'kosher-style', 'basic'
+          separateMeatDairy: false,
+          waitTimeAfterMeat: 0
+        },
+        hindu: {
+          dietaryPractice: 'flexible', // 'lacto-vegetarian', 'lacto-ovo', 'non-veg-no-beef', 'vegan'
+          avoidBeef: false,
+          avoidOnionGarlic: false
+        },
+        buddhist: {
+          dietaryPractice: 'flexible', // 'vegetarian', 'vegan', 'pescatarian', 'flexible'
+          avoidFivePungent: false
+        },
+        jain: {
+          strictness: 'basic', // 'strict', 'moderate', 'basic'
+          avoidRootVegetables: false
+        }
+      },
+
+      // FEATURE 3: Multi-Language Support
+      localization: {
+        language: 'en', // ISO 639-1 code
+        region: 'US', // ISO 3166-1 alpha-2 code
+        measurementSystem: 'imperial', // 'metric' or 'imperial'
+        currency: 'USD',
+        dateFormat: 'MM/DD/YYYY',
+        timeFormat: '12h'
       }
     };
 

@@ -25,6 +25,7 @@ import History from './pages/History';
 import Account from './pages/Account';
 import GroceryList from './pages/GroceryList';
 import BarcodeScanner from './pages/BarcodeScanner';
+import AdvancedFeatures from './pages/AdvancedFeatures';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -119,6 +120,7 @@ function App() {
                   <Route path="analyze" element={<MealAnalyzer />} />
                   <Route path="meal-planner" element={<MealPlanner />} />
                   <Route path="grocery-list" element={<GroceryList />} />
+                  <Route path="advanced-features" element={<AdvancedFeatures />} />
                   <Route path="goals" element={<Goals />} />
                   <Route path="favourites" element={<Favourites />} />
                   <Route path="achievements" element={<Achievements />} />
