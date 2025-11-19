@@ -120,36 +120,60 @@ const Dashboard = () => {
   const processWeeklyData = (weekly, profile) => {
     // Process weekly calories for chart
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const calorieGoal = profile.calculated?.dailyCalories || 2000;
+    const calorieGoal = profile.calculated?.recommendedCalories || 2000;
 
-    const chartData = days.map((day, index) => {
-      const dayData = weekly.days?.[index] || {};
+    // Get last 7 days dates
+    const today = new Date();
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      last7Days.push(date.toISOString().split('T')[0]);
+    }
+
+    const chartData = last7Days.map((dateStr, index) => {
+      const dayData = weekly.dailyTotals?.[dateStr] || {};
+      const dayName = days[new Date(dateStr).getDay() === 0 ? 6 : new Date(dateStr).getDay() - 1];
       return {
-        day,
-        calories: dayData.calories || 0,
+        day: dayName,
+        calories: Math.round(dayData.calories || 0),
         goal: calorieGoal
       };
     });
     setWeeklyCalories(chartData);
 
-    // Process macro distribution from weekly average
-    if (weekly.averages) {
-      const total = weekly.averages.protein + weekly.averages.carbs + weekly.averages.fat;
+    // Calculate averages from dailyTotals
+    const dailyTotalsArray = Object.values(weekly.dailyTotals || {});
+    const daysWithData = dailyTotalsArray.length;
+
+    if (daysWithData > 0) {
+      const totals = dailyTotalsArray.reduce((acc, day) => ({
+        protein: acc.protein + (day.protein || 0),
+        carbs: acc.carbs + (day.carbs || 0),
+        fat: acc.fat + (day.fat || 0),
+        calories: acc.calories + (day.calories || 0)
+      }), { protein: 0, carbs: 0, fat: 0, calories: 0 });
+
+      const avgProtein = totals.protein / daysWithData;
+      const avgCarbs = totals.carbs / daysWithData;
+      const avgFat = totals.fat / daysWithData;
+      const total = avgProtein + avgCarbs + avgFat;
+
       if (total > 0) {
         setMacroData([
           {
             name: 'Protein',
-            value: Math.round((weekly.averages.protein / total) * 100),
+            value: Math.round((avgProtein / total) * 100),
             color: '#10b981'
           },
           {
             name: 'Carbs',
-            value: Math.round((weekly.averages.carbs / total) * 100),
+            value: Math.round((avgCarbs / total) * 100),
             color: '#3b82f6'
           },
           {
             name: 'Fats',
-            value: Math.round((weekly.averages.fat / total) * 100),
+            value: Math.round((avgFat / total) * 100),
             color: '#f59e0b'
           }
         ]);
@@ -164,16 +188,24 @@ const Dashboard = () => {
       }
     }
 
-    // Process meal type distribution
-    if (weekly.byMealType) {
-      const mealTypes = [
-        { name: 'Breakfast', value: weekly.byMealType.breakfast || 0 },
-        { name: 'Lunch', value: weekly.byMealType.lunch || 0 },
-        { name: 'Dinner', value: weekly.byMealType.dinner || 0 },
-        { name: 'Snacks', value: weekly.byMealType.snack || 0 }
-      ];
-      setMealTypeData(mealTypes.filter(m => m.value > 0));
-    }
+    // Process meal type distribution from byDate entries
+    const mealTypeCounts = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
+    Object.values(weekly.byDate || {}).forEach(entries => {
+      entries.forEach(entry => {
+        const mealType = entry.mealType || 'snack';
+        if (mealTypeCounts[mealType] !== undefined) {
+          mealTypeCounts[mealType]++;
+        }
+      });
+    });
+
+    const mealTypes = [
+      { name: 'Breakfast', value: mealTypeCounts.breakfast },
+      { name: 'Lunch', value: mealTypeCounts.lunch },
+      { name: 'Dinner', value: mealTypeCounts.dinner },
+      { name: 'Snacks', value: mealTypeCounts.snack }
+    ];
+    setMealTypeData(mealTypes.filter(m => m.value > 0));
   };
 
   const MEAL_COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
@@ -235,8 +267,8 @@ const Dashboard = () => {
   }
 
   // Calculate stats
-  const calorieGoal = userProfile.calculated?.dailyCalories || 2000;
-  const proteinGoal = userProfile.calculated?.macros?.proteinGrams || 120;
+  const calorieGoal = userProfile.calculated?.recommendedCalories || 2000;
+  const proteinGoal = userProfile.calculated?.macros?.protein || 120;
   const todayCalories = todayData?.totals?.calories || 0;
   const todayProtein = todayData?.totals?.protein || 0;
   const caloriePercentage = calorieGoal > 0 ? Math.round((todayCalories / calorieGoal) * 100) : 0;
@@ -246,8 +278,16 @@ const Dashboard = () => {
   const currentWeight = userProfile.basicInfo?.currentWeight?.value || 0;
   const weightUnit = userProfile.basicInfo?.currentWeight?.unit || 'kg';
 
-  // Calculate streak (placeholder - would need dedicated streak tracking)
-  const streak = weeklyData?.daysWithLogs || 0;
+  // Calculate streak (based on days with logged data)
+  const streak = weeklyData?.totalDays || 0;
+
+  // Calculate average daily calories
+  const avgDailyCalories = weeklyData?.dailyTotals
+    ? Math.round(
+        Object.values(weeklyData.dailyTotals).reduce((sum, day) => sum + (day.calories || 0), 0) /
+        Math.max(Object.keys(weeklyData.dailyTotals).length, 1)
+      )
+    : 0;
 
   return (
     <div className="space-y-6 pb-8">
@@ -361,7 +401,7 @@ const Dashboard = () => {
       )}
 
       {/* Charts Section */}
-      {weeklyData && weeklyData.totalLogs > 0 && (
+      {weeklyData && weeklyData.totalEntries > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Weekly Calories Chart */}
           <motion.div
@@ -470,7 +510,7 @@ const Dashboard = () => {
             <Utensils className="text-emerald-500" size={20} />
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {weeklyData?.totalLogs || 0}
+            {weeklyData?.totalEntries || 0}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400">This week</p>
         </div>
@@ -492,7 +532,7 @@ const Dashboard = () => {
             <Flame className="text-orange-500" size={20} />
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {Math.round(weeklyData?.averages?.calories || 0)}
+            {avgDailyCalories}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400">Last 7 days</p>
         </div>

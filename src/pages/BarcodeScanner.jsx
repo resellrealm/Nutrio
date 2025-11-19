@@ -268,7 +268,7 @@ const BarcodeScanner = () => {
                   type="text"
                   value={manualBarcode}
                   onChange={(e) => setManualBarcode(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleManualSearch()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
                   placeholder="Enter barcode number"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 />
