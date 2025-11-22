@@ -10,9 +10,7 @@ import {
   Target,
   TrendingUp,
   Edit3,
-  Save,
   X,
-  Plus,
   Calendar,
   Clock,
   Award,
@@ -21,7 +19,6 @@ import {
   AlertCircle,
   Info,
   Flame,
-  TrendingDown,
   Activity,
   BarChart3
 } from 'lucide-react';
