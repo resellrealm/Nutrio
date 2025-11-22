@@ -81,7 +81,6 @@ export const registerUser = async (email, password, fullName = '') => {
       token: await user.getIdToken()
     };
   } catch (error) {
-    console.error('Registration error:', error);
     const errorCode = mapAuthErrorCode(error.code);
     return createErrorResponse(errorCode, error.message);
   }
@@ -97,9 +96,17 @@ export const loginUser = async (email, password) => {
     const user = userCredential.user;
 
     // Get user profile from Firestore
-    const profileResult = await getUserProfile(user.uid);
+    let profileResult = await getUserProfile(user.uid);
 
-    if (!profileResult.success) {
+    // If profile doesn't exist (e.g., failed during registration), create it
+    if (!profileResult.success && profileResult.errorCode === 'DB_NOT_FOUND') {
+      const createResult = await createUserProfile(user.uid, user.email);
+      if (createResult.success) {
+        profileResult = createResult;
+      } else {
+        throw new Error('Failed to create user profile');
+      }
+    } else if (!profileResult.success) {
       throw new Error('Failed to load user profile');
     }
 
@@ -116,7 +123,6 @@ export const loginUser = async (email, password) => {
       onboardingComplete: profile.onboarding?.completed || false
     };
   } catch (error) {
-    console.error('Login error:', error);
     const errorCode = mapAuthErrorCode(error.code);
     return createErrorResponse(errorCode);
   }
@@ -131,7 +137,6 @@ export const logoutUser = async () => {
     await signOut(auth);
     return { success: true };
   } catch (error) {
-    console.error('Logout error:', error);
     const errorCode = mapAuthErrorCode(error.code);
     return createErrorResponse(errorCode);
   }
@@ -149,7 +154,6 @@ export const resetPassword = async (email) => {
       message: 'Password reset email sent'
     };
   } catch (error) {
-    console.error('Password reset error:', error);
     const errorCode = mapAuthErrorCode(error.code);
     return createErrorResponse(errorCode);
   }

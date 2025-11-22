@@ -137,7 +137,6 @@ export const createUserProfile = async (userId, email) => {
     await setDoc(userRef, userData);
     return { success: true, data: userData };
   } catch (error) {
-    console.error('Error creating user profile:', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -155,7 +154,6 @@ export const getUserProfile = async (userId) => {
       return createErrorResponse(ERROR_CODES.DB_NOT_FOUND, 'User profile not found');
     }
   } catch (error) {
-    console.error('Error getting user profile:', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -171,7 +169,6 @@ export const updateUserProfile = async (userId, updates) => {
     });
     return { success: true };
   } catch (error) {
-    console.error('Error updating user profile:', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -191,7 +188,6 @@ export const updateOnboardingProgress = async (userId, screenNumber, data) => {
     await updateDoc(userRef, updates);
     return { success: true };
   } catch (error) {
-    console.error('Error updating onboarding progress:', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -208,7 +204,6 @@ export const completeOnboarding = async (userId, calculatedMetrics) => {
     });
     return { success: true };
   } catch (error) {
-    console.error('Error completing onboarding:', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }

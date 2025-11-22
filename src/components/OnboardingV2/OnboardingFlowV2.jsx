@@ -111,7 +111,6 @@ const OnboardingFlowV2 = () => {
       await updateOnboardingProgress(userId, currentStep, dataToSave);
       dispatch(saveProgress());
     } catch (error) {
-      console.error('Error saving onboarding progress:', error);
       toast.error('Failed to save progress');
     } finally {
       setIsSaving(false);
@@ -177,7 +176,6 @@ const OnboardingFlowV2 = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Error completing onboarding:', error);
       toast.error('Failed to complete onboarding. Please try again.');
     } finally {
       setIsCompleting(false);
