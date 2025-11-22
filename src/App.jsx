@@ -79,8 +79,8 @@ function AppContent() {
       try {
         const user = JSON.parse(userStr);
         dispatch(setCredentials({ user, token }));
-      } catch (e) {
-        console.error('Failed to parse user from localStorage:', e);
+      } catch {
+        // Invalid user data in localStorage, ignore
       }
     }
 
