@@ -146,6 +146,14 @@ export const loginUser = async (email, password) => {
       onboardingComplete: profile.onboarding?.completed || false
     };
   } catch (error) {
+    // Handle network-specific errors
+    if (error.message && error.message.includes('timed out')) {
+      return createErrorResponse(ERROR_CODES.AUTH_NETWORK_FAILED, error.message);
+    }
+    if (error.code === 'auth/network-request-failed') {
+      return createErrorResponse(ERROR_CODES.AUTH_NETWORK_FAILED,
+        'Network connection failed. Please check your internet connection and try again.');
+    }
     const errorCode = mapAuthErrorCode(error.code);
     return createErrorResponse(errorCode, error.message);
   }
