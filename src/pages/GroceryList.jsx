@@ -95,24 +95,6 @@ const GroceryList = () => {
     }
   };
 
-  const _handlePurchaseItem = async (itemId) => {
-    if (!currentList) return;
-
-    const previousList = { ...currentList, items: [...currentList.items] };
-    const optimisticUpdate = {
-      ...currentList,
-      items: currentList.items.map(item =>
-        item.id === itemId ? { ...item, purchased: true, checked: true } : item
-      )
-    };
-    setCurrentList(optimisticUpdate);
-    const result = await updateGroceryItem(currentList.id, itemId, { purchased: true, checked: true });
-    if (!result.success) {
-      setCurrentList(previousList);
-      toast.error('Failed to mark as purchased');
-    }
-  };
-
   // Group items by category
   const groupedItems = currentList?.items.reduce((groups, item) => {
     const category = item.category || 'other';
@@ -136,7 +118,7 @@ const GroceryList = () => {
   };
 
   const calculateProgress = () => {
-    if (!currentList) return 0;
+    if (!currentList || !currentList.items || currentList.items.length === 0) return 0;
     const checked = currentList.items.filter(item => item.checked).length;
     return (checked / currentList.items.length) * 100;
   };
