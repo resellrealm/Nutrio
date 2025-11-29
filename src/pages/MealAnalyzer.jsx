@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { incrementDailyScans, resetDailyScans } from '../store/authSlice';
+import { MAX_DAILY_SCANS, MAX_FILE_SIZE, ERROR_MESSAGES } from '../config/constants';
 
 const MealAnalyzer = () => {
   const dispatch = useDispatch();
@@ -29,8 +30,6 @@ const MealAnalyzer = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [scanMode, setScanMode] = useState('meal'); // 'meal' or 'barcode'
 
-  const MAX_DAILY_SCANS = 5;
-
   useEffect(() => {
     // Reset scans if it's a new day
     dispatch(resetDailyScans());
@@ -39,17 +38,16 @@ const MealAnalyzer = () => {
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        toast.error('Image too large. Please select an image under 10MB.');
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(ERROR_MESSAGES.FILE_TOO_LARGE);
         return;
       }
 
       // Validate file type
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
       if (!validTypes.includes(file.type)) {
-        toast.error('Invalid file type. Please select a JPG, PNG, WebP, or GIF image.');
+        toast.error(ERROR_MESSAGES.INVALID_FILE_TYPE);
         return;
       }
 

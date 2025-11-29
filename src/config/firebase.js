@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { logError } from '../utils/errorLogger';
 
 // Firebase configuration
 // IMPORTANT: Set these environment variables in your .env file
@@ -32,9 +33,10 @@ export const firebaseConfigError = missingKeys.length > 0
 export let isFirebaseFullyInitialized = false;
 
 if (missingKeys.length > 0) {
-  console.error(`[Firebase Config Error] Missing required keys: ${missingKeys.join(', ')}`);
-  console.error('Please create a .env file based on .env.example with your Firebase credentials.');
-  console.error('Also ensure Email/Password authentication is enabled in Firebase Console.');
+  logError('firebase.config', `Missing required keys: ${missingKeys.join(', ')}`, {
+    missingKeys,
+    hint: 'Please create a .env file based on .env.example with your Firebase credentials. Also ensure Email/Password authentication is enabled in Firebase Console.'
+  });
 }
 
 // Initialize Firebase only if properly configured
@@ -54,7 +56,7 @@ if (isFirebaseConfigured) {
       isFirebaseFullyInitialized = true;
     }
   } catch (error) {
-    console.error('[Firebase Init Error]', error);
+    logError('firebase.init', error, { configKeys: Object.keys(firebaseConfig) });
   }
 }
 

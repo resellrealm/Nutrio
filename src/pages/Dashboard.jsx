@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Activity, Flame, Target, Apple, Utensils, Calendar,
@@ -56,6 +57,7 @@ const getQuoteByGoal = (primaryGoal) => {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const userId = useSelector(state => state.auth.user?.id);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -260,7 +262,7 @@ const Dashboard = () => {
             Please complete the onboarding process to see your personalized dashboard.
           </p>
           <button
-            onClick={() => window.location.href = '/onboarding'}
+            onClick={() => navigate('/onboarding')}
             className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition"
           >
             Complete Onboarding
@@ -379,7 +381,7 @@ const Dashboard = () => {
           </div>
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
-              onClick={() => window.location.href = '/meal-planner'}
+              onClick={() => navigate('/meal-planner')}
               className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition text-sm"
             >
               Plan Your Meals
@@ -448,13 +450,13 @@ const Dashboard = () => {
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
-              onClick={() => window.location.href = '/analyze'}
+              onClick={() => navigate('/analyze')}
               className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition"
             >
               Analyze Meal
             </button>
             <button
-              onClick={() => window.location.href = '/barcode'}
+              onClick={() => navigate('/barcode')}
               className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition"
             >
               Scan Barcode
