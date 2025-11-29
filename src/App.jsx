@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { store } from './store/store';
 import { setCredentials, setOnboardingComplete } from './store/authSlice';
+import { LOADING_TIMEOUT, TOAST_DURATION, TOAST_SUCCESS_COLOR, TOAST_ERROR_COLOR } from './config/constants';
+import { logError } from './utils/errorLogger';
 
 // Layout
 import Layout from './components/Layout/Layout';
@@ -63,9 +65,6 @@ const AuthRequiredRoute = ({ children }) => {
   return children;
 };
 
-// Loading screen safety timeout - Total duration: 5 seconds + buffer
-const LOADING_TIMEOUT = 6000; // 5 seconds (loading) + 300ms (completion delay) + 700ms (safety buffer)
-
 // Inner app component that can use hooks
 function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -89,8 +88,11 @@ function AppContent() {
       try {
         const user = JSON.parse(userStr);
         dispatch(setCredentials({ user, token }));
-      } catch {
-        // Invalid user data in localStorage, ignore
+      } catch (error) {
+        // Invalid user data in localStorage, clear and log
+        logError('app.rehydrate', 'Failed to parse user data from localStorage', { error: error.message });
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
 
@@ -119,20 +121,20 @@ function AppContent() {
             <Toaster
               position="top-right"
               toastOptions={{
-                duration: 3000,
+                duration: TOAST_DURATION,
                 style: {
                   background: '#1f2937',
                   color: '#fff',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#7fc7a1',
+                    primary: TOAST_SUCCESS_COLOR,
                     secondary: '#fff',
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#ef4444',
+                    primary: TOAST_ERROR_COLOR,
                     secondary: '#fff',
                   },
                 },

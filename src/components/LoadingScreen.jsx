@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-
-// Loading screen timing constants - Total duration: 5 seconds
-const PROGRESS_INCREMENT = 10; // Percentage to increment each step
-const PROGRESS_INTERVAL = 500; // Milliseconds between increments (10% every 500ms = 5 seconds total)
-const COMPLETION_DELAY = 300; // Delay before calling onLoadingComplete callback
+import {
+  LOADING_SCREEN_INCREMENT,
+  LOADING_SCREEN_INTERVAL,
+  LOADING_COMPLETION_DELAY
+} from '../config/constants';
 
 const LoadingScreen = ({ onLoadingComplete }) => {
   const [progress, setProgress] = useState(0);
@@ -16,13 +16,13 @@ const LoadingScreen = ({ onLoadingComplete }) => {
           clearInterval(timer);
           setTimeout(() => {
             onLoadingComplete();
-          }, COMPLETION_DELAY);
+          }, LOADING_COMPLETION_DELAY);
           return 100;
         }
         // Consistent progress: 10% every 500ms = 5 seconds to complete
-        return Math.min(oldProgress + PROGRESS_INCREMENT, 100);
+        return Math.min(oldProgress + LOADING_SCREEN_INCREMENT, 100);
       });
-    }, PROGRESS_INTERVAL);
+    }, LOADING_SCREEN_INTERVAL);
 
     return () => {
       clearInterval(timer);
