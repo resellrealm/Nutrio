@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -19,9 +20,17 @@ import {
   Trophy,
   Flame,
   Target,
-  Camera
+  Camera,
+  Loader,
+  AlertCircle,
+  FileJson,
+  FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getUserProfile, updateUserProfile } from '../services/userService';
+import { getWeeklySummary, exportToCSV } from '../services/foodLogService';
+import { getUserRecipes } from '../services/recipeService';
+import { getUserAchievements } from '../services/achievementsService';
 
 // Helper components defined outside of Account
 const SettingSection = ({ title, children }) => (
@@ -47,24 +56,117 @@ const SettingItem = ({ icon: IconComponent, label, value, action, danger }) => (
 );
 
 const Account = () => {
-  // Initialize state with lazy initialization to avoid useEffect for initial load
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('darkMode') === 'true';
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState(() => ({
-    name: localStorage.getItem('userName') || '',
-    username: localStorage.getItem('userName') || '',
-    email: localStorage.getItem('userEmail') || '',
-    age: localStorage.getItem('userAge') || '',
-    weight: localStorage.getItem('userWeight') || '',
-    height: localStorage.getItem('userHeight') || '',
-    targetWeight: localStorage.getItem('targetWeight') || '',
-    activityLevel: localStorage.getItem('activityLevel') || '',
-    diet: localStorage.getItem('userDiet') || '',
-  }));
+  const userId = useSelector(state => state.auth.user?.id);
+  const userEmail = useSelector(state => state.auth.user?.email);
 
-  // Toggle dark mode
+  // UI State
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Profile data from Firestore
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    username: '',
+    age: '',
+    weight: '',
+    height: '',
+    targetWeight: '',
+    activityLevel: '',
+    diet: '',
+    gender: ''
+  });
+
+  // User stats
+  const [userStats, setUserStats] = useState({
+    level: 1,
+    points: 0,
+    streak: 0,
+    totalMealsLogged: 0,
+    achievementsUnlocked: 0
+  });
+
+  // Load user profile from Firestore
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const result = await getUserProfile(userId);
+
+        if (result.success && result.data) {
+          setUserProfile(result.data);
+
+          // Map Firestore data to form fields
+          const profile = result.data;
+          setProfileData({
+            name: profile.basicInfo?.fullName || '',
+            username: profile.basicInfo?.fullName?.toLowerCase().replace(/\s+/g, '_') || '',
+            age: profile.basicInfo?.age || '',
+            weight: profile.basicInfo?.currentWeight?.value || '',
+            height: profile.basicInfo?.height?.value || '',
+            targetWeight: profile.basicInfo?.targetWeight?.value || '',
+            activityLevel: profile.goals?.activityLevel || '',
+            diet: profile.dietary?.restrictions?.join(', ') || '',
+            gender: profile.basicInfo?.gender || ''
+          });
+
+          // Load user stats
+          loadUserStats();
+        } else {
+          toast.error('Failed to load profile data');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast.error('Failed to load profile');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserProfile();
+  }, [userId]);
+
+  // Load user stats from various services
+  const loadUserStats = async () => {
+    try {
+      // Get weekly summary for meal count and streak
+      const weeklyResult = await getWeeklySummary(userId, new Date().toISOString().split('T')[0]);
+
+      // Get achievements count
+      const achievementsResult = await getUserAchievements(userId);
+
+      if (weeklyResult.success) {
+        setUserStats(prev => ({
+          ...prev,
+          totalMealsLogged: weeklyResult.data?.totalMeals || 0,
+          streak: weeklyResult.data?.streak || 0,
+          // Simple level calculation: level = totalMeals / 10
+          level: Math.floor((weeklyResult.data?.totalMeals || 0) / 10) + 1,
+          points: (weeklyResult.data?.totalMeals || 0) * 10
+        }));
+      }
+
+      if (achievementsResult.success) {
+        const unlockedCount = achievementsResult.data?.filter(a => a.unlocked).length || 0;
+        setUserStats(prev => ({
+          ...prev,
+          achievementsUnlocked: unlockedCount
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  // Toggle dark mode (keep in localStorage as it's a UI preference)
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -79,51 +181,167 @@ const Account = () => {
     }
   };
 
-  // Save profile changes
-  const handleSaveProfile = () => {
-    localStorage.setItem('userName', profileData.name);
-    localStorage.setItem('userEmail', profileData.email);
-    localStorage.setItem('userAge', profileData.age);
-    localStorage.setItem('userWeight', profileData.weight);
-    localStorage.setItem('userHeight', profileData.height);
-    localStorage.setItem('targetWeight', profileData.targetWeight);
-    localStorage.setItem('activityLevel', profileData.activityLevel);
-    localStorage.setItem('userDiet', profileData.diet);
+  // Save profile changes to Firestore
+  const handleSaveProfile = async () => {
+    if (!userId) {
+      toast.error('User not logged in');
+      return;
+    }
 
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+    setIsSaving(true);
+    try {
+      // Map form fields to Firestore structure
+      const updates = {
+        basicInfo: {
+          ...userProfile?.basicInfo,
+          fullName: profileData.name,
+          age: parseInt(profileData.age) || null,
+          gender: profileData.gender,
+          height: {
+            value: parseFloat(profileData.height) || null,
+            unit: 'cm'
+          },
+          currentWeight: {
+            value: parseFloat(profileData.weight) || null,
+            unit: 'kg'
+          },
+          targetWeight: {
+            value: parseFloat(profileData.targetWeight) || null,
+            unit: 'kg'
+          }
+        },
+        goals: {
+          ...userProfile?.goals,
+          activityLevel: profileData.activityLevel
+        },
+        dietary: {
+          ...userProfile?.dietary,
+          restrictions: profileData.diet ? profileData.diet.split(',').map(d => d.trim()) : []
+        }
+      };
+
+      const result = await updateUserProfile(userId, updates);
+
+      if (result.success) {
+        toast.success('Profile updated successfully!');
+        setIsEditing(false);
+
+        // Reload profile
+        const updatedProfile = await getUserProfile(userId);
+        if (updatedProfile.success) {
+          setUserProfile(updatedProfile.data);
+        }
+      } else {
+        toast.error(result.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Get subscription info - use 'planTier' for consistency with Sidebar
+  // Export ALL data (profile + food logs + recipes + achievements)
+  const handleExportAllData = async () => {
+    if (!userId) {
+      toast.error('User not logged in');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Get all user data
+      const [profileResult, recipesResult, achievementsResult] = await Promise.all([
+        getUserProfile(userId),
+        getUserRecipes(userId),
+        getUserAchievements(userId)
+      ]);
+
+      // Prepare export data
+      const exportData = {
+        profile: profileResult.success ? profileResult.data : null,
+        recipes: recipesResult.success ? recipesResult.data : [],
+        achievements: achievementsResult.success ? achievementsResult.data : [],
+        stats: userStats,
+        exportDate: new Date().toISOString(),
+        version: '1.0.0'
+      };
+
+      // Create JSON file
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nutrio-complete-data-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success('All data exported successfully!');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast.error('Failed to export data');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Export food logs to CSV
+  const handleExportFoodLogs = async () => {
+    if (!userId) {
+      toast.error('User not logged in');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Export last 90 days of food logs
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 90);
+
+      const result = await exportToCSV(
+        userId,
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
+      );
+
+      if (result.success) {
+        // Create CSV file
+        const blob = new Blob([result.data], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nutrio-food-logs-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast.success('Food logs exported successfully!');
+      } else {
+        toast.error(result.error || 'Failed to export food logs');
+      }
+    } catch (error) {
+      console.error('Error exporting food logs:', error);
+      toast.error('Failed to export food logs');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Get subscription info from localStorage (temporary)
   const subscriptionTier = localStorage.getItem('planTier') || 'free';
   const scansThisMonth = parseInt(localStorage.getItem('scansThisMonth') || '0');
-  const userLevel = localStorage.getItem('userLevel') || '1';
-  const userPoints = localStorage.getItem('userPoints') || '0';
-  const userStreak = localStorage.getItem('userStreak') || '0';
 
-  // Export data
-  const handleExportData = () => {
-    const data = {
-      profile: profileData,
-      stats: {
-        level: userLevel,
-        points: userPoints,
-        streak: userStreak,
-      },
-      subscription: subscriptionTier,
-      exportDate: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `nutrio-data-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast.success('Data exported successfully!');
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -142,7 +360,7 @@ const Account = () => {
           {/* Avatar */}
           <div className="relative">
             <div className="w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {profileData.name?.[0]?.toUpperCase() || 'U'}
+              {profileData.name?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || 'U'}
             </div>
             <button className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 p-2 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <Camera size={16} className="text-gray-600 dark:text-gray-300" />
@@ -153,20 +371,20 @@ const Account = () => {
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{profileData.name || 'User'}</h2>
             <p className="text-gray-600 dark:text-gray-400">@{profileData.username || 'username'}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">{profileData.email}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">{userEmail}</p>
 
             <div className="flex items-center justify-center sm:justify-start space-x-4 mt-3">
               <div className="flex items-center space-x-1">
                 <Trophy className="text-yellow-500" size={16} />
-                <span className="text-sm font-medium">Level {userLevel}</span>
+                <span className="text-sm font-medium">Level {userStats.level}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Flame className="text-orange-500" size={16} />
-                <span className="text-sm font-medium">{userStreak} day streak</span>
+                <span className="text-sm font-medium">{userStats.streak} day streak</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Target className="text-primary" size={16} />
-                <span className="text-sm font-medium">{userPoints} XP</span>
+                <span className="text-sm font-medium">{userStats.points} XP</span>
               </div>
             </div>
           </div>
@@ -189,7 +407,7 @@ const Account = () => {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Name</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Full Name</label>
                 <input
                   type="text"
                   value={profileData.name}
@@ -198,13 +416,17 @@ const Account = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Username</label>
-                <input
-                  type="text"
-                  value={profileData.username}
-                  onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Gender</label>
+                <select
+                  value={profileData.gender}
+                  onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                />
+                >
+                  <option value="">Select...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Age</label>
@@ -219,6 +441,7 @@ const Account = () => {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Weight (kg)</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={profileData.weight}
                   onChange={(e) => setProfileData({ ...profileData, weight: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
@@ -228,6 +451,7 @@ const Account = () => {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Height (cm)</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={profileData.height}
                   onChange={(e) => setProfileData({ ...profileData, height: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
@@ -237,21 +461,79 @@ const Account = () => {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Target Weight (kg)</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={profileData.targetWeight}
                   onChange={(e) => setProfileData({ ...profileData, targetWeight: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Activity Level</label>
+                <select
+                  value={profileData.activityLevel}
+                  onChange={(e) => setProfileData({ ...profileData, activityLevel: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Select...</option>
+                  <option value="sedentary">Sedentary (little/no exercise)</option>
+                  <option value="light">Light (1-3 days/week)</option>
+                  <option value="moderate">Moderate (3-5 days/week)</option>
+                  <option value="active">Active (6-7 days/week)</option>
+                  <option value="very_active">Very Active (athlete)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Dietary Restrictions</label>
+                <input
+                  type="text"
+                  value={profileData.diet}
+                  onChange={(e) => setProfileData({ ...profileData, diet: e.target.value })}
+                  placeholder="e.g., Vegetarian, Vegan, Gluten-free"
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
             <button
               onClick={handleSaveProfile}
-              className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2"
+              disabled={isSaving}
+              className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save size={18} />
-              <span>Save Changes</span>
+              {isSaving ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>Save Changes</span>
+                </>
+              )}
             </button>
           </motion.div>
         )}
+      </SettingSection>
+
+      {/* User Stats */}
+      <SettingSection title="Your Stats">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{userStats.totalMealsLogged}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Meals Logged</div>
+          </div>
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{userStats.streak}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Day Streak</div>
+          </div>
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{userStats.achievementsUnlocked}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Achievements</div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">Level {userStats.level}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Your Level</div>
+          </div>
+        </div>
       </SettingSection>
 
       {/* Subscription */}
@@ -388,9 +670,14 @@ const Account = () => {
       {/* Data & Storage */}
       <SettingSection title="Data & Storage">
         <SettingItem
-          icon={Download}
-          label="Export My Data"
-          action={handleExportData}
+          icon={FileJson}
+          label="Export All Data (JSON)"
+          action={handleExportAllData}
+        />
+        <SettingItem
+          icon={FileText}
+          label="Export Food Logs (CSV)"
+          action={handleExportFoodLogs}
         />
         <SettingItem
           icon={Trash2}
