@@ -231,6 +231,164 @@ Respond ONLY with valid JSON (no markdown):
 };
 
 /**
+ * Analyze fridge/cupboard photo and detect ingredients
+ *
+ * @param {string} imageBase64 - Base64 encoded image data
+ * @returns {Promise<Object>} Result with detected ingredients
+ */
+export const analyzeFridgePhoto = async (imageBase64) => {
+  const genAI = getGeminiClient();
+
+  if (!genAI) {
+    return {
+      success: false,
+      error: 'GEMINI_NOT_CONFIGURED',
+      message: 'Gemini API key not configured. Using demo mode.',
+      demoMode: true
+    };
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `Analyze this fridge/cupboard photo and identify all visible food ingredients.
+
+Respond ONLY with valid JSON (no markdown, no code blocks):
+
+{
+  "ingredients": [
+    {"name": "Eggs", "quantity": "12", "category": "proteins", "freshness": "fresh"},
+    {"name": "Milk", "quantity": "1 carton", "category": "dairy", "freshness": "fresh"},
+    {"name": "Broccoli", "quantity": "1 bunch", "category": "produce", "freshness": "fresh"}
+  ],
+  "confidence": 85
+}
+
+Categories: produce, proteins, dairy, grains_bread, pantry, frozen, snacks, beverages, condiments
+Freshness: fresh, moderate, questionable`;
+
+    const imageData = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: imageData
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+
+    return {
+      success: true,
+      data: {
+        ingredients: data.ingredients || [],
+        confidence: data.confidence || 75
+      }
+    };
+
+  } catch (error) {
+    console.error('Error analyzing fridge photo:', error);
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Generate meal suggestions based on available ingredients and user goals
+ *
+ * @param {Array} ingredients - List of available ingredients
+ * @param {Object} userGoals - User's nutrition goals
+ * @param {string} mealType - breakfast, lunch, dinner, snack
+ * @param {string} difficulty - easy, medium, hard
+ * @returns {Promise<Object>} Result with meal suggestions
+ */
+export const generateMealSuggestionsFromIngredients = async (ingredients, userGoals, mealType, difficulty) => {
+  const genAI = getGeminiClient();
+
+  if (!genAI) {
+    return {
+      success: false,
+      error: 'GEMINI_NOT_CONFIGURED',
+      demoMode: true
+    };
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const ingredientsList = ingredients.map(i => i.name || i).join(', ');
+    const goalText = userGoals ?
+      `Target: ${userGoals.calories}cal, ${userGoals.protein}g protein, ${userGoals.carbs}g carbs, ${userGoals.fats}g fat` :
+      'Balanced nutrition';
+
+    const difficultyTime = {
+      easy: '< 20 minutes',
+      medium: '20-40 minutes',
+      hard: '40+ minutes'
+    }[difficulty] || '< 30 minutes';
+
+    const prompt = `Generate 3-5 ${mealType} recipe suggestions using these ingredients: ${ingredientsList}
+
+User's nutrition goals: ${goalText}
+Difficulty: ${difficulty} (${difficultyTime})
+
+Respond ONLY with valid JSON (no markdown):
+
+{
+  "meals": [
+    {
+      "id": 1,
+      "name": "Avocado Toast with Poached Egg",
+      "description": "Whole grain toast topped with mashed avocado and poached egg",
+      "cookTime": "15 min",
+      "difficulty": "Easy",
+      "calories": 380,
+      "protein": 18,
+      "carbs": 35,
+      "fat": 20,
+      "fiber": 8,
+      "ingredients": ["Bread", "Avocado", "Eggs"],
+      "matchScore": 95,
+      "instructions": ["Toast bread", "Mash avocado", "Poach egg", "Assemble"],
+      "reason": "High protein, healthy fats, fits calorie goal"
+    }
+  ]
+}
+
+Rules:
+- Use ONLY ingredients from the provided list (maximize usage)
+- Match the user's nutrition goals as closely as possible
+- Match the difficulty level
+- Provide cook time estimate
+- Calculate matchScore (% of ingredients from user's list, 0-100)
+- Include clear instructions (array of steps)
+- Explain why this meal is good for the user`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+
+    return {
+      success: true,
+      data: data.meals || []
+    };
+
+  } catch (error) {
+    console.error('Error generating meal suggestions:', error);
+    return handleApiError(error);
+  }
+};
+
+/**
  * Check if Gemini API is configured
  */
 export const isGeminiConfigured = () => {
@@ -241,5 +399,7 @@ export const isGeminiConfigured = () => {
 export default {
   analyzeMealPhoto,
   generateMealSuggestions,
+  analyzeFridgePhoto,
+  generateMealSuggestionsFromIngredients,
   isGeminiConfigured
 };
