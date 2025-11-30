@@ -18,6 +18,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy-loaded pages for code splitting
 const OnboardingFlowV2 = lazy(() => import('./components/OnboardingV2/OnboardingFlowV2'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const MealAnalyzer = lazy(() => import('./pages/MealAnalyzer'));
 const MealPlanner = lazy(() => import('./pages/MealPlanner'));
@@ -150,7 +151,7 @@ function AppContent() {
                   path="/onboarding"
                   element={
                     <AuthRequiredRoute>
-                      <OnboardingFlowV2 />
+                      <Onboarding />
                     </AuthRequiredRoute>
                   }
                 />
