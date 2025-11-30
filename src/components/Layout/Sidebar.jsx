@@ -15,6 +15,7 @@ import {
   LogOut,
   X,
   Lock,
+  BarChart3,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { logout } from '../../store/authSlice';
@@ -79,6 +80,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Trophy,
       label: 'Achievements',
       color: 'text-amber-500',
+      premiumOnly: false,
+    },
+    {
+      path: '/analytics',
+      icon: BarChart3,
+      label: 'Analytics',
+      color: 'text-indigo-500',
       premiumOnly: false,
     },
     {
