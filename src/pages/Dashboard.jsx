@@ -12,13 +12,21 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { getUserProfile } from '../services/userService';
-import { getDailyTotals, getWeeklySummary } from '../services/foodLogService';
+import {
+  getDailyTotals,
+  getWeeklySummary,
+  getFoodLogByDate,
+  updateFoodLogEntry,
+  deleteFoodLogEntry
+} from '../services/foodLogService';
 import { getMealOfTheDay } from '../services/recipeService';
 import {
   getPersonalizedMealOfTheDay,
   getFoodSuggestionsForDeficiencies,
   generateNutritionInsights
 } from '../services/smartRecommendationService';
+import FoodLogEntry from '../components/FoodLogEntry';
+import EditFoodModal from '../components/EditFoodModal';
 import toast from 'react-hot-toast';
 
 // Motivational quotes based on user goals
@@ -71,6 +79,7 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [todayData, setTodayData] = useState(null);
   const [weeklyData, setWeeklyData] = useState(null);
+  const [todayEntries, setTodayEntries] = useState([]);
 
   // Derived data
   const [quoteOfDay, setQuoteOfDay] = useState('');
@@ -83,6 +92,10 @@ const Dashboard = () => {
   // Smart recommendations
   const [nutritionInsights, setNutritionInsights] = useState([]);
   const [foodSuggestions, setFoodSuggestions] = useState([]);
+
+  // Edit/Delete modal state
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -106,6 +119,12 @@ const Dashboard = () => {
       const todayResult = await getDailyTotals(userId, today);
       if (todayResult.success) {
         setTodayData(todayResult.data);
+      }
+
+      // Fetch today's food log entries (for displaying individual items)
+      const entriesResult = await getFoodLogByDate(userId, today);
+      if (entriesResult.success) {
+        setTodayEntries(entriesResult.data || []);
       }
 
       // Fetch weekly summary
@@ -232,6 +251,61 @@ const Dashboard = () => {
       { name: 'Snacks', value: mealTypeCounts.snack }
     ];
     setMealTypeData(mealTypes.filter(m => m.value > 0));
+  };
+
+  // Handler for editing a food log entry
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry);
+    setIsEditModalOpen(true);
+  };
+
+  // Handler for saving edited entry
+  const handleSaveEdit = async (entryId, updates) => {
+    try {
+      const result = await updateFoodLogEntry(entryId, {
+        mealType: updates.mealType,
+        'food.servingsConsumed': updates.servingsConsumed,
+        'food.nutrition': updates.nutrition
+      });
+
+      if (result.success) {
+        toast.success('Entry updated successfully!');
+        // Refresh dashboard data
+        await fetchDashboardData();
+        setIsEditModalOpen(false);
+        setEditingEntry(null);
+      } else {
+        toast.error(result.error || 'Failed to update entry');
+      }
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      toast.error('An error occurred while updating');
+    }
+  };
+
+  // Handler for deleting a food log entry
+  const handleDeleteEntry = async (entry) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${entry.food?.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const result = await deleteFoodLogEntry(entry.id);
+
+      if (result.success) {
+        toast.success('Entry deleted successfully!');
+        // Refresh dashboard data
+        await fetchDashboardData();
+      } else {
+        toast.error(result.error || 'Failed to delete entry');
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast.error('An error occurred while deleting');
+    }
   };
 
   const MEAL_COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
@@ -594,6 +668,37 @@ const Dashboard = () => {
         </motion.div>
       )}
 
+      {/* Today's Meals Section */}
+      {todayEntries.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-card p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Utensils className="text-primary" size={24} />
+              Today's Meals
+            </h3>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {todayEntries.length} {todayEntries.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {todayEntries.map((entry) => (
+              <FoodLogEntry
+                key={entry.id}
+                entry={entry}
+                onEdit={handleEditEntry}
+                onDelete={handleDeleteEntry}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* Charts Section */}
       {weeklyData && weeklyData.totalEntries > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -731,6 +836,17 @@ const Dashboard = () => {
           <p className="text-sm text-gray-600 dark:text-gray-400">Last 7 days</p>
         </div>
       </motion.div>
+
+      {/* Edit Food Modal */}
+      <EditFoodModal
+        entry={editingEntry}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingEntry(null);
+        }}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 };
