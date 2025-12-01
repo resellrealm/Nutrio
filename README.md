@@ -20,7 +20,12 @@ A comprehensive nutrition tracking and meal planning application built with Reac
 - **Goal-Specific Recommendations**: Personalized calorie and macro targets
 
 ### Dashboard
-- **Daily Recommended Meal**: Unique meal suggestion that changes daily (62 recipes in rotation)
+- **Personalized Daily Meal Recommendation**: Smart meal suggestions based on YOUR preferences
+  - 🔒 **Safety First**: Automatically filters out allergens (nuts, dairy, shellfish, etc.)
+  - 🥗 **Dietary Restrictions**: Respects vegetarian, vegan, gluten-free, low-carb preferences
+  - 🚫 **Avoids Dislikes**: Excludes foods you don't like
+  - 👥 **Category-Based**: Users with same preferences get same meal on same day
+  - 🔄 **Daily Rotation**: Different meal each day within your compatible recipes
 - **Motivational Quotes**: Goal-specific daily quotes
 - **Quick Stats**: Calories, protein, streak, weight at a glance
 - **Weekly Charts**: Calorie intake bar charts, macronutrient distribution pie charts
@@ -29,7 +34,13 @@ A comprehensive nutrition tracking and meal planning application built with Reac
 
 ### Recipe System
 - **62 Built-in Recipes**: Professionally crafted meals covering breakfast, lunch, dinner, and snacks
-- **Daily Meal Rotation**: Different recommended meal each day for 2+ months
+- **Smart Personalization Engine**:
+  - Creates "user categories" based on dietary preferences
+  - Example: Vegetarian + No allergies = Category A (20 compatible recipes)
+  - Example: Vegetarian + Nut allergy = Category B (15 compatible recipes)
+  - Example: No restrictions = Category C (all 62 recipes)
+  - Users in same category get same daily recommendation
+- **Daily Meal Rotation**: Different recommended meal each day within your compatible recipes
 - **Nutritional Info**: Calories, protein, carbs, fat, fiber for every recipe
 - **Detailed Instructions**: Step-by-step cooking instructions
 - **Ingredient Lists**: Complete ingredient lists for grocery planning

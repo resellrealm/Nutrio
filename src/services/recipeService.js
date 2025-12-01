@@ -1147,6 +1147,193 @@ export const getMealForDate = (date) => {
 };
 
 /**
+ * Filter recipes based on user dietary preferences
+ * This creates "categories" of users with similar preferences
+ *
+ * @param {Object} userProfile - User profile with dietary preferences
+ * @returns {Array} Filtered recipes that match user preferences
+ */
+const filterRecipesByUserPreferences = (userProfile) => {
+  if (!userProfile?.dietary) {
+    return BUILT_IN_RECIPES; // No preferences, return all recipes
+  }
+
+  const { restrictions = [], allergies = [], dislikedFoods = [] } = userProfile.dietary;
+
+  return BUILT_IN_RECIPES.filter(recipe => {
+    // 1. Check dietary restrictions (vegetarian, vegan, etc.)
+    if (restrictions.length > 0) {
+      const hasRequiredTags = restrictions.every(restriction => {
+        const restrictionLower = restriction.toLowerCase();
+
+        // Map common restrictions to recipe tags
+        if (restrictionLower.includes('vegetarian')) {
+          return recipe.tags.some(tag => tag.toLowerCase().includes('vegetarian'));
+        }
+        if (restrictionLower.includes('vegan')) {
+          return recipe.tags.some(tag => tag.toLowerCase().includes('vegan'));
+        }
+        if (restrictionLower.includes('gluten')) {
+          return recipe.tags.some(tag => tag.toLowerCase().includes('gluten-free'));
+        }
+        if (restrictionLower.includes('dairy')) {
+          return recipe.tags.some(tag => tag.toLowerCase().includes('dairy-free'));
+        }
+        if (restrictionLower.includes('low carb') || restrictionLower.includes('keto')) {
+          return recipe.tags.some(tag => tag.toLowerCase().includes('low carb'));
+        }
+
+        return true; // Unknown restriction, don't filter out
+      });
+
+      if (!hasRequiredTags) return false;
+    }
+
+    // 2. Check allergies - exclude recipes with allergens
+    if (allergies.length > 0) {
+      const hasAllergen = allergies.some(allergen => {
+        const allergenLower = allergen.toLowerCase();
+
+        // Check in recipe name, description, and ingredients
+        const recipeText = [
+          recipe.name,
+          recipe.description,
+          ...recipe.ingredients,
+          ...recipe.tags
+        ].join(' ').toLowerCase();
+
+        // Common allergen mappings
+        if (allergenLower.includes('nut') || allergenLower.includes('peanut')) {
+          return recipeText.includes('nut') ||
+                 recipeText.includes('peanut') ||
+                 recipeText.includes('almond') ||
+                 recipeText.includes('cashew') ||
+                 recipeText.includes('walnut');
+        }
+        if (allergenLower.includes('dairy') || allergenLower.includes('lactose')) {
+          return recipeText.includes('cheese') ||
+                 recipeText.includes('milk') ||
+                 recipeText.includes('cream') ||
+                 recipeText.includes('butter') ||
+                 recipeText.includes('yogurt');
+        }
+        if (allergenLower.includes('egg')) {
+          return recipeText.includes('egg');
+        }
+        if (allergenLower.includes('fish') || allergenLower.includes('seafood')) {
+          return recipeText.includes('salmon') ||
+                 recipeText.includes('tuna') ||
+                 recipeText.includes('shrimp') ||
+                 recipeText.includes('fish');
+        }
+        if (allergenLower.includes('shellfish')) {
+          return recipeText.includes('shrimp') ||
+                 recipeText.includes('crab') ||
+                 recipeText.includes('lobster');
+        }
+        if (allergenLower.includes('soy')) {
+          return recipeText.includes('soy') ||
+                 recipeText.includes('tofu') ||
+                 recipeText.includes('edamame');
+        }
+        if (allergenLower.includes('wheat') || allergenLower.includes('gluten')) {
+          return recipeText.includes('wheat') ||
+                 recipeText.includes('bread') ||
+                 recipeText.includes('pasta') ||
+                 recipeText.includes('flour');
+        }
+
+        // Generic allergen check
+        return recipeText.includes(allergenLower);
+      });
+
+      if (hasAllergen) return false; // Exclude recipes with allergens
+    }
+
+    // 3. Check disliked foods
+    if (dislikedFoods.length > 0) {
+      const hasDislikedFood = dislikedFoods.some(food => {
+        const foodLower = food.toLowerCase();
+        const recipeText = [
+          recipe.name,
+          recipe.description,
+          ...recipe.ingredients
+        ].join(' ').toLowerCase();
+
+        return recipeText.includes(foodLower);
+      });
+
+      if (hasDislikedFood) return false;
+    }
+
+    return true; // Recipe passes all filters
+  });
+};
+
+/**
+ * Get PERSONALIZED meal of the day based on user preferences
+ * Users with the same preferences get the same meal recommendation
+ *
+ * @param {Object} userProfile - User profile with dietary preferences
+ * @returns {Object} Personalized recipe recommendation for today
+ *
+ * Example:
+ * - Vegetarian + No allergies → Category A → Recipe X
+ * - Vegetarian + Nut allergy → Category B → Recipe Y
+ * - No restrictions → Category C → Recipe Z
+ */
+export const getPersonalizedMealOfTheDay = (userProfile) => {
+  // Filter recipes based on user preferences
+  const compatibleRecipes = filterRecipesByUserPreferences(userProfile);
+
+  // If no recipes match preferences, fall back to all recipes
+  if (compatibleRecipes.length === 0) {
+    console.warn('No recipes match user preferences, showing all recipes');
+    return getMealOfTheDay();
+  }
+
+  // Rotate through compatible recipes based on day
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
+  const recipeIndex = daysSinceEpoch % compatibleRecipes.length;
+
+  return compatibleRecipes[recipeIndex];
+};
+
+/**
+ * Get personalized meal for a specific date
+ *
+ * @param {Object} userProfile - User profile with dietary preferences
+ * @param {Date} date - Target date
+ * @returns {Object} Personalized recipe for the specified date
+ */
+export const getPersonalizedMealForDate = (userProfile, date) => {
+  const compatibleRecipes = filterRecipesByUserPreferences(userProfile);
+
+  if (compatibleRecipes.length === 0) {
+    return getMealForDate(date);
+  }
+
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+  const daysSinceEpoch = Math.floor(targetDate.getTime() / (1000 * 60 * 60 * 24));
+  const recipeIndex = daysSinceEpoch % compatibleRecipes.length;
+
+  return compatibleRecipes[recipeIndex];
+};
+
+/**
+ * Get all recipes compatible with user preferences
+ *
+ * @param {Object} userProfile - User profile with dietary preferences
+ * @returns {Array} All recipes that match user's dietary needs
+ */
+export const getCompatibleRecipes = (userProfile) => {
+  return filterRecipesByUserPreferences(userProfile);
+};
+
+/**
  * Search recipes by name or description
  */
 export const searchRecipes = (query) => {
@@ -1474,6 +1661,9 @@ export default {
   getRecipesByTag,
   getMealOfTheDay,
   getMealForDate,
+  getPersonalizedMealOfTheDay,
+  getPersonalizedMealForDate,
+  getCompatibleRecipes,
   searchRecipes,
   saveUserRecipe,
   getUserRecipes,
