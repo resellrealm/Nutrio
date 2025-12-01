@@ -1,9 +1,10 @@
 /**
  * Smart Meal Recommendation Service
  * Analyzes user's nutritional intake and provides personalized meal recommendations
+ * Now includes dietary restriction and allergy filtering
  */
 
-import { BUILT_IN_RECIPES } from './recipeService';
+import { BUILT_IN_RECIPES, getCompatibleRecipes } from './recipeService';
 import { DEFAULT_CALORIE_TARGET, DEFAULT_PROTEIN_TARGET } from '../config/constants';
 
 /**
@@ -182,8 +183,12 @@ export const getPersonalizedRecommendations = (todayIntake, userProfile, options
     userProfile
   );
 
-  // Filter recipes
-  let recipes = BUILT_IN_RECIPES.filter(recipe => {
+  // Step 1: Filter by dietary restrictions and allergies first (SAFETY FIRST!)
+  // This creates user "categories" - users with same preferences get same pool
+  let recipes = getCompatibleRecipes(userProfile);
+
+  // Step 2: Apply additional filters (meal type, exclude list)
+  recipes = recipes.filter(recipe => {
     if (excludeRecipeIds.includes(recipe.id)) return false;
     if (mealType && recipe.mealType !== mealType) return false;
     return true;
@@ -227,24 +232,47 @@ export const getPersonalizedRecommendations = (todayIntake, userProfile, options
 
 /**
  * Get "Meal of the Day" personalized to user
+ * Users with the SAME dietary preferences get the SAME meal on the SAME day
+ * Creates "user categories" - same preferences = same category = same meal
  */
 export const getPersonalizedMealOfTheDay = (todayIntake, userProfile) => {
-  const result = getPersonalizedRecommendations(todayIntake, userProfile, { limit: 1 });
+  // Step 1: Get recipes compatible with user's dietary restrictions/allergies
+  const compatibleRecipes = getCompatibleRecipes(userProfile);
 
-  if (result.recommendations.length === 0) {
-    // Fallback to random recipe
+  if (compatibleRecipes.length === 0) {
+    // Fallback if no compatible recipes
+    console.warn('No compatible recipes found for user preferences');
     const randomIndex = Math.floor(Math.random() * BUILT_IN_RECIPES.length);
     return {
       meal: BUILT_IN_RECIPES[randomIndex],
-      reasons: ['A delicious and balanced meal for you'],
-      analysis: result.analysis,
+      reasons: ['A delicious meal for you'],
+      analysis: analyzeNutritionalGaps(todayIntake, userProfile?.goals, userProfile),
     };
   }
 
+  // Step 2: Rotate through compatible recipes by day
+  // This ensures users in the same "category" get the same meal on the same day
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
+  const recipeIndex = daysSinceEpoch % compatibleRecipes.length;
+  const selectedMeal = compatibleRecipes[recipeIndex];
+
+  // Step 3: Analyze why this meal is good for the user
+  const analysis = analyzeNutritionalGaps(todayIntake, userProfile?.goals, userProfile);
+  const primaryGoal = userProfile?.goals?.primary || 'maintain';
+  const fit = calculateRecipeFitScore(selectedMeal, analysis.gaps, primaryGoal, analysis.deficiencies);
+
   return {
-    meal: result.recommendations[0],
-    reasons: result.recommendations[0].reasons,
-    analysis: result.analysis,
+    meal: selectedMeal,
+    reasons: fit.reasons.length > 0 ? fit.reasons : ['A delicious and balanced meal for you'],
+    analysis,
+    compatibleRecipesCount: compatibleRecipes.length,
+    categoryInfo: {
+      dietaryRestrictions: userProfile?.dietary?.restrictions || [],
+      allergies: userProfile?.dietary?.allergies || [],
+      totalCompatibleMeals: compatibleRecipes.length,
+    },
   };
 };
 
