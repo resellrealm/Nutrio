@@ -6,18 +6,21 @@ import { handleApiError } from '../utils/errorCodes';
  * FREE API for meal photo analysis and nutrition estimation
  *
  * Setup Instructions:
- * 1. Get 3 free API keys from: https://makersuite.google.com/app/apikey
- * 2. Add to .env file:
+ * 1. Get 1-8 free API keys from: https://aistudio.google.com
+ * 2. Use DIFFERENT Google accounts for each key to get true 8x capacity
+ * 3. Add to .env file:
  *    VITE_GEMINI_API_KEY=your_first_key
  *    VITE_GEMINI_API_KEY_2=your_second_key
- *    VITE_GEMINI_API_KEY_3=your_third_key
+ *    ...up to KEY_8
  *
- * Rate Limits PER KEY (FREE tier):
- * - 60 requests per minute
- * - 1,500 requests per day
- * - 1 million tokens per month
+ * Current Model: gemini-2.5-flash-lite
  *
- * With 3 keys: 4,500 requests/day, 3M tokens/month total capacity
+ * Rate Limits PER KEY (FREE tier - 2025):
+ * - 15 requests per minute
+ * - 1,000 requests per day
+ * - 250,000 tokens per minute
+ *
+ * With 8 keys from different accounts: 8,000 requests/day total capacity
  *
  * Smart Failover:
  * - Primary key used by default
@@ -29,12 +32,17 @@ import { handleApiError } from '../utils/errorCodes';
 // API Key Manager with Smart Failover
 class GeminiKeyManager {
   constructor() {
-    // Load all available API keys from env
+    // Load all available API keys from env (supports up to 8 keys)
     this.keys = [
       import.meta.env.VITE_GEMINI_API_KEY,
       import.meta.env.VITE_GEMINI_API_KEY_2,
       import.meta.env.VITE_GEMINI_API_KEY_3,
-    ].filter(key => key && key !== 'your_gemini_api_key_here');
+      import.meta.env.VITE_GEMINI_API_KEY_4,
+      import.meta.env.VITE_GEMINI_API_KEY_5,
+      import.meta.env.VITE_GEMINI_API_KEY_6,
+      import.meta.env.VITE_GEMINI_API_KEY_7,
+      import.meta.env.VITE_GEMINI_API_KEY_8,
+    ].filter(key => key && key !== 'your_gemini_api_key_here' && key !== 'your_first_gemini_api_key_here' && key !== 'your_second_gemini_api_key_here' && key !== 'your_third_gemini_api_key_here' && key !== 'your_fourth_gemini_api_key_here' && key !== 'your_fifth_gemini_api_key_here' && key !== 'your_sixth_gemini_api_key_here' && key !== 'your_seventh_gemini_api_key_here' && key !== 'your_eighth_gemini_api_key_here');
 
     // Track cooldown status: { keyIndex: cooldownUntilTimestamp }
     this.cooldowns = {};
@@ -211,7 +219,7 @@ export const analyzeMealPhoto = async (imageBase64) => {
   try {
     return await executeWithFailover(async (genAI) => {
       // Use Gemini Pro Vision model for image analysis
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       // Prepare the prompt for nutrition analysis
       const prompt = `Analyze this food image and provide detailed nutrition information.
@@ -346,7 +354,7 @@ export const generateMealSuggestions = async (userGoals, currentIntake) => {
 
   try {
     return await executeWithFailover(async (genAI) => {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       const prompt = `Based on these nutritional goals and current intake, suggest 3 meals.
 
@@ -405,7 +413,7 @@ export const analyzeFridgePhoto = async (imageBase64) => {
 
   try {
     return await executeWithFailover(async (genAI) => {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       const prompt = `Analyze this fridge/cupboard photo and identify all visible food ingredients.
 
@@ -476,7 +484,7 @@ export const generateMealSuggestionsFromIngredients = async (ingredients, userGo
 
   try {
     return await executeWithFailover(async (genAI) => {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       const ingredientsList = ingredients.map(i => i.name || i).join(', ');
       const goalText = userGoals ?
