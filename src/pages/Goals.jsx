@@ -41,7 +41,6 @@ const Goals = () => {
   const [saving, setSaving] = useState(false);
 
   // User data
-  const [userProfile, setUserProfile] = useState(null);
   const [todayData, setTodayData] = useState(null);
   const [weeklyData, setWeeklyData] = useState(null);
 
@@ -51,7 +50,6 @@ const Goals = () => {
   const [weeklyAdherence, setWeeklyAdherence] = useState(null);
 
   // UI state
-  const [timeInterval, setTimeInterval] = useState('daily');
   const [showGoalModal, setShowGoalModal] = useState(false);
 
   // Stats
@@ -75,7 +73,6 @@ const Goals = () => {
       if (!profileResult.success) {
         throw new Error('Failed to load profile');
       }
-      setUserProfile(profileResult.data);
 
       // Fetch or create goals
       const goalsResult = await getUserGoals(userId);
@@ -121,7 +118,6 @@ const Goals = () => {
 
         // Calculate stats
         const daysTracked = weeklyResult.data.totalDays || 0;
-        const totalEntries = weeklyResult.data.totalEntries || 0;
 
         // Calculate streak
         const sortedDates = Object.keys(weeklyResult.data.byDate || {}).sort().reverse();
@@ -173,6 +169,7 @@ const Goals = () => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
@@ -226,7 +223,7 @@ const Goals = () => {
       last7Days.push(date.toISOString().split('T')[0]);
     }
 
-    return last7Days.map((dateStr, index) => {
+    return last7Days.map((dateStr, _index) => {
       const dayData = weeklyData.dailyTotals[dateStr];
       const dayName = days[new Date(dateStr).getDay() === 0 ? 6 : new Date(dateStr).getDay() - 1];
 
@@ -340,6 +337,7 @@ const Goals = () => {
       if (goals) {
         setTempGoals({ ...goals });
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goals]);
 
     if (!tempGoals) return null;

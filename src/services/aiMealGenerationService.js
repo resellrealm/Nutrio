@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db, isFirebaseFullyInitialized } from '../config/firebase';
-import { collection, doc, setDoc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;

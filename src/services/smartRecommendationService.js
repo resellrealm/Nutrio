@@ -129,7 +129,7 @@ const calculateRecipeFitScore = (recipe, gaps, primaryGoal, deficiencies) => {
       }
       break;
 
-    case 'maintain':
+    case 'maintain': {
       // Prefer balanced macros
       const isBalanced = recipe.protein >= 20 && recipe.carbs >= 30 && recipe.fat >= 10;
       if (isBalanced) {
@@ -137,6 +137,7 @@ const calculateRecipeFitScore = (recipe, gaps, primaryGoal, deficiencies) => {
         reasons.push('Well-balanced macros');
       }
       break;
+    }
   }
 
   // Bonus for filling multiple gaps

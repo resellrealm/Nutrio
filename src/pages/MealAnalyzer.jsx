@@ -106,7 +106,7 @@ const MealAnalyzer = () => {
         icon: '⚠️'
       });
       // Use demo mode for development
-      useDemoAnalysis();
+      loadDemoAnalysis();
       return;
     }
 
@@ -161,7 +161,7 @@ const MealAnalyzer = () => {
         } else if (result.demoMode) {
           // API not configured, use demo
           toast('Using demo mode (Gemini not configured)', { icon: 'ℹ️' });
-          useDemoAnalysis();
+          loadDemoAnalysis();
         } else {
           toast.error(result.message || 'Failed to analyze meal');
         }
@@ -176,7 +176,7 @@ const MealAnalyzer = () => {
   };
 
   // Demo analysis for development/testing
-  const useDemoAnalysis = () => {
+  const loadDemoAnalysis = () => {
     setIsAnalyzing(true);
     setTimeout(() => {
       setAnalysisResult({

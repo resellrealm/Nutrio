@@ -6,17 +6,11 @@ import toast from 'react-hot-toast';
 import { getWeeklySummary } from '../services/foodLogService';
 import { getUserGoals } from '../services/goalsService';
 import {
-  getUserAchievements,
   calculateAchievementStats,
   checkAndUpdateAchievements,
   getAchievementCounts,
   ACHIEVEMENT_DEFINITIONS
 } from '../services/achievementsService';
-
-// Icon mapping
-const iconMap = {
-  Utensils, Calendar, Heart, Target, Flame, Star, Zap, TrendingUp, Award, Trophy
-};
 
 const Achievements = () => {
   const userId = useSelector(state => state.auth.user?.id);
