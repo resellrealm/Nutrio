@@ -67,6 +67,17 @@ A comprehensive nutrition tracking and meal planning application built with Reac
 - **Image Upscaling**: Enhance image quality with 2x-4x upscaling
 - **Batch Processing**: Generate images for multiple recipes at once
 
+### Gemini AI Smart Failover
+- **8-Key Support**: Configure up to 8 Gemini API keys for massive scaling
+- **Automatic Failover**: Seamlessly switches between keys when rate limits hit
+- **8,000 Requests/Day**: With 8 keys from different Google accounts
+- **24-Hour Cooldown**: Rate-limited keys automatically recover
+- **Zero Downtime**: Users never experience API errors (unless all keys exhausted)
+- **Model**: `gemini-2.5-flash-lite` optimized for speed and capacity
+- **Rate Limits per Key**: 15 RPM, 1,000 RPD, 250K TPM
+- **100% Free**: All keys use Google's free tier
+- See [GEMINI_FAILOVER.md](GEMINI_FAILOVER.md) for complete documentation
+
 ### Additional Features
 - **Grocery List Generation**: Auto-generate shopping lists based on meal plans
 - **Achievements System**: Unlock achievements for consistent tracking
@@ -114,8 +125,9 @@ npm run dev
 
 ## Environment Setup
 
-Create a `.env` file with your Firebase configuration:
+Create a `.env` file with your configuration:
 
+### Firebase (Required)
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -125,12 +137,40 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-For AI-powered meal analysis, add:
-```env
-# Google Gemini AI (FREE - get key from https://makersuite.google.com/app/apikey)
-VITE_GEMINI_API_KEY=your_gemini_api_key
+### Gemini AI with Smart Failover (Required)
+**Model**: `gemini-2.5-flash-lite` - optimized for capacity (1,000 req/day per key)
 
-# ModelsLab AI (Optional - for image generation & processing)
+**Single Key Setup** (1,000 requests/day):
+```env
+VITE_GEMINI_API_KEY=your_gemini_api_key
+```
+
+**Multi-Key Setup** (up to 8,000 requests/day):
+```env
+# Use DIFFERENT Google accounts for each key!
+VITE_GEMINI_API_KEY=account1_key
+VITE_GEMINI_API_KEY_2=account2_key
+VITE_GEMINI_API_KEY_3=account3_key
+VITE_GEMINI_API_KEY_4=account4_key
+VITE_GEMINI_API_KEY_5=account5_key
+VITE_GEMINI_API_KEY_6=account6_key
+VITE_GEMINI_API_KEY_7=account7_key
+VITE_GEMINI_API_KEY_8=account8_key
+```
+
+**Get API Keys**: https://aistudio.google.com
+
+**Features**:
+- Automatic failover when rate limits hit
+- 24-hour cooldown tracking
+- Works with 1-8 keys (flexible)
+- Console logging for monitoring
+
+See [GEMINI_FAILOVER.md](GEMINI_FAILOVER.md) for complete setup guide.
+
+### ModelsLab AI (Optional)
+```env
+# Optional - only for AI-generated recipe images
 VITE_MODELSLAB_API_KEY=your_modelslab_api_key
 ```
 
@@ -195,7 +235,11 @@ src/
 - **recipeService.js**: 62 built-in recipes, user custom recipes, meal of the day
 - **groceryListService.js**: Smart grocery list generation from recipes
 - **authService.js**: Firebase authentication wrapper
-- **geminiService.js**: Google Gemini AI for meal photo analysis and nutrition estimation
+- **geminiService.js**: Google Gemini AI with smart failover for meal photo analysis
+  - Supports 1-8 API keys with automatic failover
+  - `gemini-2.5-flash-lite` model for optimal capacity
+  - Rate limit detection and 24-hour cooldown tracking
+  - 8,000 requests/day capacity with 8 keys
 - **modelsLabService.js**: ModelsLab AI for image analysis, generation, and processing
 - **openFoodFactsService.js**: Open Food Facts API v2 for barcode product lookup
 
@@ -212,9 +256,11 @@ src/
 11.0.0 - Complete nutrition tracking app with:
 - 62 built-in recipes for daily meal recommendations
 - 20-step comprehensive onboarding flow
-- **Google Gemini AI integration** for intelligent meal photo analysis
+- **Google Gemini AI with Smart Failover** (8-key support, 8,000 req/day capacity)
+- **gemini-2.5-flash-lite** model for optimal performance and capacity
 - **ModelsLab AI integration** for image generation and processing
 - **Open Food Facts API v2** for enhanced barcode scanning
+- Automatic API key failover with 24-hour cooldown tracking
 - User custom recipe storage in Firestore
 - Dashboard with charts and progress tracking
 - Food logging via barcode, AI photo analysis, or manual entry
