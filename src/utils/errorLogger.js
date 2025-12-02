@@ -24,8 +24,23 @@ export const logError = (context, error, metadata = {}) => {
     }
   }
 
-  // TODO: In production, send to error tracking service
-  // Example: Sentry.captureException(error, { tags: { context }, extra: metadata });
+  // Production error tracking (not yet implemented)
+  // When ready for production, integrate with error tracking service:
+  //
+  // Option 1: Sentry (recommended for most apps)
+  //   - Install: npm install @sentry/react
+  //   - Setup: https://docs.sentry.io/platforms/javascript/guides/react/
+  //   - Usage: Sentry.captureException(error, { tags: { context }, extra: metadata });
+  //
+  // Option 2: LogRocket (includes session replay)
+  //   - Install: npm install logrocket
+  //   - Setup: https://docs.logrocket.com/docs/quickstart
+  //   - Usage: LogRocket.captureException(error, { tags: { context }, extra: metadata });
+  //
+  // Option 3: Rollbar
+  //   - Install: npm install rollbar
+  //   - Setup: https://docs.rollbar.com/docs/javascript
+  //   - Usage: Rollbar.error(errorMessage, { context, ...metadata });
 
   // Store error in a way that can be accessed for debugging if needed
   try {

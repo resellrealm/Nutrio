@@ -16,6 +16,7 @@ import {
   mapFirestoreErrorCode,
   createErrorResponse
 } from '../utils/errorCodes';
+import { logError } from '../utils/errorLogger';
 
 // Helper to check if Firestore is available
 const checkFirestoreConfig = () => {
@@ -441,7 +442,7 @@ export const generateGroceryList = async (userId, userProfile, _mealPlan = []) =
     };
 
   } catch (error) {
-    console.error('Error generating grocery list:', error);
+    logError('groceryListService.generateGroceryList', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -469,7 +470,7 @@ export const getUserGroceryLists = async (userId) => {
 
     return { success: true, data: lists };
   } catch (error) {
-    console.error('Error getting grocery lists:', error);
+    logError('groceryListService.getUserGroceryLists', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
@@ -499,7 +500,7 @@ export const updateGroceryItem = async (listId, itemId, updates) => {
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating grocery item:', error);
+    logError('groceryListService.updateGroceryItem', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }
