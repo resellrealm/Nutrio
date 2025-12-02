@@ -26,12 +26,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
-  getUserRecipes,
   saveUserRecipe,
-  updateUserRecipe,
-  deleteUserRecipe,
   markRecipeCooked,
-  rateRecipe,
   getAllUserAndBuiltInRecipes,
   BUILT_IN_RECIPES
 } from '../services/recipeService';
@@ -57,6 +53,7 @@ const Favourites = () => {
     if (user?.uid) {
       loadRecipes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadRecipes = async () => {

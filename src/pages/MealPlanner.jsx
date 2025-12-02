@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChefHat,
@@ -25,13 +24,12 @@ import toast from 'react-hot-toast';
 import { analyzeFridgePhoto, generateMealSuggestionsFromIngredients } from '../services/geminiService';
 import { getUserGoals } from '../services/goalsService';
 import { logFoodItem } from '../services/foodLogService';
-import { saveUserRecipe, getAllRecipes } from '../services/recipeService';
+import { saveUserRecipe } from '../services/recipeService';
 import { getUserProfile } from '../services/userService';
 import { getMealsForUser } from '../services/aiMealGenerationService';
 import { logError } from '../utils/errorLogger';
 
 const MealPlanner = () => {
-  const navigate = useNavigate();
   const user = useSelector(state => state.auth.user);
   const userId = user?.id;
 
@@ -54,8 +52,6 @@ const MealPlanner = () => {
   // Weekly meals state
   const [weeklyMeals, setWeeklyMeals] = useState(null);
   const [loadingWeeklyMeals, setLoadingWeeklyMeals] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(null);
 
   // Fetch user goals and profile
   useEffect(() => {
@@ -63,6 +59,7 @@ const MealPlanner = () => {
       loadUserGoals();
       loadUserProfileAndMeals();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const loadUserGoals = async () => {
@@ -79,7 +76,6 @@ const MealPlanner = () => {
       const profileResult = await getUserProfile(userId);
       if (profileResult.success) {
         const profile = profileResult.data;
-        setUserProfile(profile);
 
         // Fetch AI-generated meals with allergy filtering
         const meals = await getMealsForUser(profile);

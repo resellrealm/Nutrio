@@ -64,7 +64,6 @@ const Account = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [profilePhotoURL, setProfilePhotoURL] = useState(null);
 
@@ -137,6 +136,7 @@ const Account = () => {
     };
 
     loadUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   // Load user stats from various services
@@ -300,7 +300,6 @@ const Account = () => {
       return;
     }
 
-    setIsExporting(true);
     try {
       // Get all user data
       const [profileResult, recipesResult, achievementsResult] = await Promise.all([
@@ -332,8 +331,6 @@ const Account = () => {
     } catch (error) {
       console.error('Error exporting data:', error);
       toast.error('Failed to export data');
-    } finally {
-      setIsExporting(false);
     }
   };
 
@@ -344,7 +341,6 @@ const Account = () => {
       return;
     }
 
-    setIsExporting(true);
     try {
       // Export last 90 days of food logs
       const endDate = new Date();
@@ -374,8 +370,6 @@ const Account = () => {
     } catch (error) {
       console.error('Error exporting food logs:', error);
       toast.error('Failed to export food logs');
-    } finally {
-      setIsExporting(false);
     }
   };
 

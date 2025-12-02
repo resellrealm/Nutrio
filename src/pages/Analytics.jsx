@@ -11,7 +11,7 @@ import {
   FileText, Loader
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getWeeklySummary, getDailyTotals, exportToCSV } from '../services/foodLogService';
+import { getDailyTotals, exportToCSV } from '../services/foodLogService';
 import { getUserGoals } from '../services/goalsService';
 
 const Analytics = () => {
@@ -32,6 +32,7 @@ const Analytics = () => {
     if (user?.uid) {
       loadAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, selectedPeriod]);
 
   const loadAnalytics = async () => {
