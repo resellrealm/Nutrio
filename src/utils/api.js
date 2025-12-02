@@ -3,6 +3,7 @@ import {
   ERROR_CODES,
   handleApiError
 } from './errorCodes';
+import { logError } from './errorLogger';
 
 // API Configuration
 export const API_CONFIG = {
@@ -41,7 +42,7 @@ export const analyzeFoodImage = async (imageFile) => {
       data: response.data.foods[0], // Returns nutrition data
     };
   } catch (error) {
-    console.error('Food analysis error:', error);
+    logError('api.analyzeFoodImage', error);
     return handleApiError(error);
   }
 };
@@ -69,7 +70,7 @@ export const searchFood = async (query) => {
       data: response.data.foods,
     };
   } catch (error) {
-    console.error('Food search error:', error);
+    logError('api.searchFood', error);
     return handleApiError(error);
   }
 };
@@ -94,7 +95,7 @@ export const getRecipeRecommendations = async (diet, intolerances = []) => {
       data: response.data.results,
     };
   } catch (error) {
-    console.error('Recipe recommendations error:', error);
+    logError('api.getRecipeRecommendations', error);
     return handleApiError(error);
   }
 };
@@ -119,7 +120,7 @@ export const searchRecipesByIngredients = async (ingredients) => {
       data: response.data,
     };
   } catch (error) {
-    console.error('Recipe search error:', error);
+    logError('api.searchRecipesByIngredients', error);
     return handleApiError(error);
   }
 };

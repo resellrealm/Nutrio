@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { handleApiError } from '../utils/errorCodes';
+import { logError } from '../utils/errorLogger';
 
 /**
  * Google Gemini AI Service
@@ -116,7 +117,7 @@ Rules:
         analysis = JSON.parse(text);
       }
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
+      logError('geminiService.analyzeMealPhoto', parseError, { responseText: text });
       throw new Error('Invalid response format from AI');
     }
 
@@ -148,7 +149,7 @@ Rules:
     };
 
   } catch (error) {
-    console.error('Error analyzing meal with Gemini:', error);
+    logError('geminiService.analyzeMealPhoto', error);
 
     // Handle specific error cases
     if (error.message?.includes('API_KEY')) {
@@ -225,7 +226,7 @@ Respond ONLY with valid JSON (no markdown):
     };
 
   } catch (error) {
-    console.error('Error generating meal suggestions:', error);
+    logError('geminiService.generateMealSuggestionsFromIngredients', error);
     return handleApiError(error);
   }
 };
@@ -294,7 +295,7 @@ Freshness: fresh, moderate, questionable`;
     };
 
   } catch (error) {
-    console.error('Error analyzing fridge photo:', error);
+    logError('geminiService.analyzeFridgePhoto', error);
     return handleApiError(error);
   }
 };
@@ -383,7 +384,7 @@ Rules:
     };
 
   } catch (error) {
-    console.error('Error generating meal suggestions:', error);
+    logError('geminiService.generateMealSuggestionsBasedOnGoals', error);
     return handleApiError(error);
   }
 };

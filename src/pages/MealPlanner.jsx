@@ -28,6 +28,7 @@ import { logFoodItem } from '../services/foodLogService';
 import { saveUserRecipe, getAllRecipes } from '../services/recipeService';
 import { getUserProfile } from '../services/userService';
 import { getMealsForUser } from '../services/aiMealGenerationService';
+import { logError } from '../utils/errorLogger';
 
 const MealPlanner = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const MealPlanner = () => {
         setWeeklyMeals(meals);
       }
     } catch (error) {
-      console.error('Error loading weekly meals:', error);
+      logError('MealPlanner.loadUserProfileAndMeals', error);
       toast.error('Failed to load weekly meals');
     } finally {
       setLoadingWeeklyMeals(false);
@@ -154,7 +155,7 @@ const MealPlanner = () => {
         toast.error(result.message || 'Failed to analyze image', { id: 'scanning' });
       }
     } catch (error) {
-      console.error('Fridge analysis error:', error);
+      logError('MealPlanner.handleFridgePhotoUpload', error);
       toast.error('Failed to analyze fridge photo', { id: 'scanning' });
     } finally {
       setIsScanning(false);
@@ -194,7 +195,7 @@ const MealPlanner = () => {
         toast.error('Failed to generate meal suggestions', { id: 'generating' });
       }
     } catch (error) {
-      console.error('Meal generation error:', error);
+      logError('MealPlanner.generateMealPlan', error);
       toast.error('Failed to generate meals', { id: 'generating' });
     } finally {
       setIsGenerating(false);
@@ -232,7 +233,7 @@ const MealPlanner = () => {
         toast.error('Failed to add meal to food log');
       }
     } catch (error) {
-      console.error('Error logging meal:', error);
+      logError('MealPlanner.handleAddMealToLog', error);
       toast.error('Failed to add meal');
     }
   };
@@ -272,7 +273,7 @@ const MealPlanner = () => {
         toast.error('Failed to save recipe');
       }
     } catch (error) {
-      console.error('Error saving recipe:', error);
+      logError('MealPlanner.handleSaveToFavourites', error);
       toast.error('Failed to save recipe');
     }
   };
