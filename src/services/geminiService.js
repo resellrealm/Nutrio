@@ -226,7 +226,7 @@ Respond ONLY with valid JSON (no markdown):
     };
 
   } catch (error) {
-    logError('geminiService.generateMealSuggestionsFromIngredients', error);
+    logError('geminiService.generateMealSuggestions', error);
     return handleApiError(error);
   }
 };
@@ -384,7 +384,7 @@ Rules:
     };
 
   } catch (error) {
-    logError('geminiService.generateMealSuggestionsBasedOnGoals', error);
+    logError('geminiService.generateMealSuggestionsFromIngredients', error);
     return handleApiError(error);
   }
 };

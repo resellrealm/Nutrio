@@ -241,6 +241,11 @@ export const completeOnboarding = async (userId, calculatedMetrics) => {
 
 // Calculate BMI
 export const calculateBMI = (weight, height, weightUnit, heightUnit) => {
+  // Validate inputs
+  if (!weight || !height || weight <= 0 || height <= 0) {
+    return 0;
+  }
+
   // Convert to metric
   let weightKg = weightUnit === 'lbs' ? weight * 0.453592 : weight;
   let heightM = heightUnit === 'ft' ? height * 0.3048 : height / 100;
@@ -251,6 +256,11 @@ export const calculateBMI = (weight, height, weightUnit, heightUnit) => {
 
 // Calculate TDEE (Total Daily Energy Expenditure)
 export const calculateTDEE = (weight, height, age, gender, activityLevel, weightUnit, heightUnit) => {
+  // Validate inputs
+  if (!weight || !height || !age || weight <= 0 || height <= 0 || age <= 0 || age > 150) {
+    return 0;
+  }
+
   // Convert to metric
   let weightKg = weightUnit === 'lbs' ? weight * 0.453592 : weight;
   let heightCm = heightUnit === 'ft' ? height * 30.48 : height;
