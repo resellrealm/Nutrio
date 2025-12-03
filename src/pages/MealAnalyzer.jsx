@@ -475,7 +475,7 @@ const MealAnalyzer = () => {
                     <p className="text-sm text-gray-600">Carbs</p>
                   </div>
                   <div className="bg-orange-100 rounded-lg p-3">
-                    <p className="text-xl font-bold text-orange-600">{analysisResult.nutrition.fats}g</p>
+                    <p className="text-xl font-bold text-orange-600">{analysisResult.nutrition.fat}g</p>
                     <p className="text-sm text-gray-600">Fats</p>
                   </div>
                 </div>
