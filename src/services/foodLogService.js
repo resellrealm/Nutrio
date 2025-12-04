@@ -65,7 +65,16 @@ export const logFoodItem = async (userId, foodData) => {
         }
       },
 
-      source: foodData.source || 'manual', // 'barcode' | 'photo' | 'manual'
+      source: foodData.source || 'manual', // 'barcode' | 'photo' | 'manual' | 'recipe'
+
+      // Scan feedback tracking (for photo scans)
+      scanFeedback: foodData.scanFeedback || {
+        wasCorrect: null, // true/false after user feedback
+        userCorrected: false, // true if user manually corrected
+        confidence: foodData.confidence || null,
+        hadOnlineResearch: foodData.hadOnlineResearch || false
+      },
+
       timestamp: serverTimestamp(),
       createdAt: serverTimestamp()
     };

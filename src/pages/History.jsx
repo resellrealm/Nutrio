@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   History as HistoryIcon,
   Calendar,
   Search,
-  Filter,
   Download,
   TrendingUp,
   Clock,
   ChevronLeft,
   ChevronRight,
   MoreVertical,
-  Loader
+  Loader,
+  Edit,
+  Trash2,
+  X,
+  Check
 } from 'lucide-react';
 import { auth } from '../config/firebase';
-import { getFoodLogByDateRange } from '../services/foodLogService';
+import { getFoodLogByDateRange, deleteFoodLogEntry, updateFoodLogEntry } from '../services/foodLogService';
 import toast from 'react-hot-toast';
 import { format, startOfDay, endOfDay, subDays, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -29,43 +32,50 @@ const History = () => {
     end: endOfDay(new Date())
   });
 
+  // Menu and edit state
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingMeal, setEditingMeal] = useState(null);
+  const [deletingMealId, setDeletingMealId] = useState(null);
+  const [editServings, setEditServings] = useState(1);
+  const [editMealType, setEditMealType] = useState('lunch');
+
   // Fetch meal history data from Firestore
   useEffect(() => {
-    const fetchMealHistory = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        toast.error('Please log in to view your history');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const result = await getFoodLogByDateRange(
-          user.uid,
-          format(dateRange.start, 'yyyy-MM-dd'),
-          format(dateRange.end, 'yyyy-MM-dd')
-        );
-
-        if (result.success) {
-          const groupedData = groupEntriesByDate(result.data || []);
-          setMealHistory(groupedData);
-          calculateWeeklySummary(result.data || []);
-        } else {
-          toast.error('Failed to load meal history');
-          setMealHistory([]);
-        }
-      } catch (error) {
-        console.error('Error fetching meal history:', error);
-        toast.error('Failed to load meal history');
-        setMealHistory([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchMealHistory();
   }, [dateRange]);
+
+  const fetchMealHistory = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('Please log in to view your history');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const result = await getFoodLogByDateRange(
+        user.uid,
+        format(dateRange.start, 'yyyy-MM-dd'),
+        format(dateRange.end, 'yyyy-MM-dd')
+      );
+
+      if (result.success) {
+        const groupedData = groupEntriesByDate(result.data || []);
+        setMealHistory(groupedData);
+        calculateWeeklySummary(result.data || []);
+      } else {
+        toast.error('Failed to load meal history');
+        setMealHistory([]);
+      }
+    } catch (error) {
+      console.error('Error fetching meal history:', error);
+      toast.error('Failed to load meal history');
+      setMealHistory([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Group entries by date
   const groupEntriesByDate = (entries) => {
@@ -99,8 +109,10 @@ const History = () => {
         carbs: Math.round((nutrition.carbs || 0) * multiplier),
         fats: Math.round((nutrition.fat || 0) * multiplier),
         servings: entry.food.servingsConsumed || 1,
-        source: entry.food.source,
-        imageUrl: entry.food.imageUrl
+        source: entry.source,
+        imageUrl: entry.food.imageUrl,
+        rawNutrition: nutrition, // Keep for editing
+        rawEntry: entry // Keep full entry for editing
       });
 
       // Update daily totals
@@ -181,6 +193,69 @@ const History = () => {
     toast.success('Data exported successfully!');
   };
 
+  // Handle delete meal
+  const handleDeleteMeal = async (mealId) => {
+    try {
+      const result = await deleteFoodLogEntry(mealId);
+      if (result.success) {
+        toast.success('Meal deleted successfully!');
+        fetchMealHistory(); // Refresh the list
+        setDeletingMealId(null);
+      } else {
+        toast.error('Failed to delete meal');
+      }
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      toast.error('An error occurred while deleting meal');
+    }
+  };
+
+  // Handle edit meal
+  const handleEditMeal = (meal) => {
+    setEditingMeal(meal);
+    setEditServings(meal.servings);
+    setEditMealType(meal.type);
+    setOpenMenuId(null);
+  };
+
+  // Save edited meal
+  const handleSaveEdit = async () => {
+    if (!editingMeal) return;
+
+    try {
+      // Calculate new nutrition based on new servings
+      const newNutrition = {
+        calories: Math.round((editingMeal.rawNutrition.calories || 0) * editServings),
+        protein: Math.round((editingMeal.rawNutrition.protein || 0) * editServings),
+        carbs: Math.round((editingMeal.rawNutrition.carbs || 0) * editServings),
+        fat: Math.round((editingMeal.rawNutrition.fat || 0) * editServings),
+        fiber: Math.round((editingMeal.rawNutrition.fiber || 0) * editServings),
+        sugar: Math.round((editingMeal.rawNutrition.sugar || 0) * editServings),
+        sodium: Math.round((editingMeal.rawNutrition.sodium || 0) * editServings)
+      };
+
+      const updates = {
+        'food.servingsConsumed': editServings,
+        'food.nutrition': newNutrition,
+        mealType: editMealType,
+        updatedAt: new Date()
+      };
+
+      const result = await updateFoodLogEntry(editingMeal.id, updates);
+
+      if (result.success) {
+        toast.success('Meal updated successfully!');
+        fetchMealHistory(); // Refresh the list
+        setEditingMeal(null);
+      } else {
+        toast.error('Failed to update meal');
+      }
+    } catch (error) {
+      console.error('Error updating meal:', error);
+      toast.error('An error occurred while updating meal');
+    }
+  };
+
   // Filter meals based on search query
   const filteredHistory = mealHistory.map(day => ({
     ...day,
@@ -199,6 +274,15 @@ const History = () => {
       default: return '🍽️';
     }
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openMenuId) setOpenMenuId(null);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -325,14 +409,14 @@ const History = () => {
               {/* Meals List */}
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {day.meals.map(meal => (
-                  <div key={meal.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div key={meal.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors relative group">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xl">
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xl flex-shrink-0">
                           {getMealIcon(meal.type)}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-800 dark:text-white">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-800 dark:text-white truncate">
                             {meal.name}
                             {meal.brand && (
                               <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
@@ -341,7 +425,7 @@ const History = () => {
                             )}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">
-                            <Clock size={14} className="mr-1" />
+                            <Clock size={14} className="mr-1 flex-shrink-0" />
                             {meal.time} • {meal.type}
                             {meal.servings !== 1 && (
                               <span className="ml-2">• {meal.servings}x servings</span>
@@ -349,11 +433,54 @@ const History = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-800 dark:text-white">{meal.calories} cal</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {meal.protein}g protein • {meal.carbs}g carbs • {meal.fats}g fat
-                        </p>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-800 dark:text-white">{meal.calories} cal</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {meal.protein}g protein • {meal.carbs}g carbs • {meal.fats}g fat
+                          </p>
+                        </div>
+
+                        {/* Menu Button */}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === meal.id ? null : meal.id);
+                            }}
+                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <MoreVertical size={18} className="text-gray-600 dark:text-gray-400" />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          <AnimatePresence>
+                            {openMenuId === meal.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-50"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={() => handleEditMeal(meal)}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center rounded-t-lg"
+                                >
+                                  <Edit size={16} className="mr-2" />
+                                  Edit portion/meal type
+                                </button>
+                                <button
+                                  onClick={() => setDeletingMealId(meal.id)}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center rounded-b-lg"
+                                >
+                                  <Trash2 size={16} className="mr-2" />
+                                  Delete from log
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -363,6 +490,158 @@ const History = () => {
           ))}
         </div>
       )}
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingMeal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setEditingMeal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Edit Meal</h3>
+                <button
+                  onClick={() => setEditingMeal(null)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-white mb-1">{editingMeal.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Original: {editingMeal.rawNutrition.calories} cal per serving
+                  </p>
+                </div>
+
+                {/* Servings */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Servings: {editServings}x
+                  </label>
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="5"
+                    step="0.25"
+                    value={editServings}
+                    onChange={(e) => setEditServings(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span>0.25x</span>
+                    <span>1x</span>
+                    <span>3x</span>
+                    <span>5x</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    New total: {Math.round(editingMeal.rawNutrition.calories * editServings)} calories
+                  </p>
+                </div>
+
+                {/* Meal Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Meal Type
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: 'breakfast', label: 'Breakfast', icon: '🌅' },
+                      { id: 'lunch', label: 'Lunch', icon: '☀️' },
+                      { id: 'dinner', label: 'Dinner', icon: '🌙' },
+                      { id: 'snack', label: 'Snack', icon: '🍿' }
+                    ].map((meal) => (
+                      <button
+                        key={meal.id}
+                        onClick={() => setEditMealType(meal.id)}
+                        className={`p-2 rounded-lg border-2 transition-all ${
+                          editMealType === meal.id
+                            ? 'border-primary bg-primary/10'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="text-xl mb-1">{meal.icon}</div>
+                        <div className="text-xs font-medium">{meal.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => setEditingMeal(null)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+                >
+                  <Check size={18} className="mr-2" />
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deletingMealId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDeletingMealId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Delete this item?</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                This will permanently remove this meal from your log. This action cannot be undone.
+              </p>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeletingMealId(null)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteMeal(deletingMealId)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors flex items-center justify-center"
+                >
+                  <Trash2 size={18} className="mr-2" />
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Weekly Summary */}
       {!isLoading && mealHistory.length > 0 && (
