@@ -1,10 +1,12 @@
 /**
  * Error Logging Utility
- * Centralized error handling and logging
- * In production, this can be extended to integrate with services like Sentry, LogRocket, etc.
+ * Centralized error handling and logging with Sentry integration
  */
 
+import * as Sentry from '@sentry/react';
+
 const isDevelopment = import.meta.env.DEV;
+const isSentryEnabled = import.meta.env.VITE_SENTRY_DSN && !isDevelopment;
 
 /**
  * Log an error
@@ -28,23 +30,18 @@ export const logError = (context, error, metadata = {}) => {
     }
   }
 
-  // Production error tracking (not yet implemented)
-  // When ready for production, integrate with error tracking service:
-  //
-  // Option 1: Sentry (recommended for most apps)
-  //   - Install: npm install @sentry/react
-  //   - Setup: https://docs.sentry.io/platforms/javascript/guides/react/
-  //   - Usage: Sentry.captureException(error, { tags: { context }, extra: metadata });
-  //
-  // Option 2: LogRocket (includes session replay)
-  //   - Install: npm install logrocket
-  //   - Setup: https://docs.logrocket.com/docs/quickstart
-  //   - Usage: LogRocket.captureException(error, { tags: { context }, extra: metadata });
-  //
-  // Option 3: Rollbar
-  //   - Install: npm install rollbar
-  //   - Setup: https://docs.rollbar.com/docs/javascript
-  //   - Usage: Rollbar.error(errorMessage, { context, ...metadata });
+  // Production error tracking with Sentry
+  if (isSentryEnabled) {
+    try {
+      Sentry.captureException(error, {
+        tags: { context },
+        extra: metadata,
+        level: 'error'
+      });
+    } catch {
+      // Silently fail if Sentry is unavailable
+    }
+  }
 
   // Store error in a way that can be accessed for debugging if needed
   try {
@@ -76,6 +73,19 @@ export const logWarning = (context, message, metadata = {}) => {
       console.warn(`[${context}]`, message, metadata);
     } catch {
       // Silently fail if console is unavailable
+    }
+  }
+
+  // Send warnings to Sentry in production
+  if (isSentryEnabled) {
+    try {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        tags: { context },
+        extra: metadata
+      });
+    } catch {
+      // Silently fail if Sentry is unavailable
     }
   }
 };

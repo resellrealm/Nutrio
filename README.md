@@ -417,7 +417,15 @@ After setup, test these features to ensure everything works:
 - [ ] Upload profile photo
 - [ ] Photo displays in Account page
 
-### 8. Browser Notifications (Optional) ✓
+### 8. Email Verification ✓
+- [ ] Register new account
+- [ ] Check email inbox for verification link
+- [ ] Click verification link
+- [ ] Email verified status shows in dashboard
+
+Email verification is automatically sent when you register. You can resend the verification email from the banner that appears on the dashboard.
+
+### 9. Browser Notifications (Optional) ✓
 - [ ] Enable notifications in browser
 - [ ] Set up meal reminders
 - [ ] Receive achievement alerts
@@ -428,16 +436,25 @@ Browser notifications work automatically - no additional setup required. Users c
 - Daily logging reminders
 - Achievement and goal alerts
 
+### 10. Error Monitoring (Optional) ✓
+- [ ] Add VITE_SENTRY_DSN to .env
+- [ ] Errors automatically tracked in production
+- [ ] View errors in Sentry dashboard
+
+Sentry integration is optional but recommended for production. It tracks errors, performance issues, and provides session replay.
+
 ## API Key Summary
 
 | Service | Required? | Cost | Purpose |
 |---------|-----------|------|---------|
-| **Firebase** | ✅ Required | FREE* | Authentication, Firestore DB, Storage |
+| **Firebase** | ✅ Required | FREE* | Authentication, Firestore DB, Storage, Email verification |
 | **Google Gemini AI** | ✅ Required | FREE | Meal photo analysis, smart suggestions |
 | **Open Food Facts** | ✅ Built-in | FREE | Barcode product lookup (no key needed) |
+| **Sentry** | ⚪ Optional | FREE** | Error monitoring, session replay |
 | **ModelsLab** | ⚪ Optional | Paid | AI-generated recipe images |
 
 *Firebase free tier includes: 50K reads/day, 20K writes/day, 1GB storage
+**Sentry free tier includes: 5,000 errors/month, performance monitoring
 
 ## Troubleshooting
 

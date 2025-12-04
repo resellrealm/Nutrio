@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile
 } from 'firebase/auth';
 import { createUserProfile, getUserProfile } from './userService';
@@ -68,6 +69,21 @@ export const registerUser = async (email, password, fullName = '') => {
       );
     }
 
+    // Send email verification
+    try {
+      await withTimeout(
+        sendEmailVerification(user, {
+          url: window.location.origin + '/login',
+          handleCodeInApp: false
+        }),
+        10000,
+        'Failed to send verification email'
+      );
+    } catch (verifyError) {
+      // Log but don't fail registration if email sending fails
+      logError('authService.registerUser', 'Email verification failed', { error: verifyError });
+    }
+
     // Create user profile in Firestore with timeout
     const profileResult = await withTimeout(
       createUserProfile(user.uid, email),
@@ -87,10 +103,12 @@ export const registerUser = async (email, password, fullName = '') => {
       user: {
         id: user.uid,
         email: user.email,
-        displayName: fullName
+        displayName: fullName,
+        emailVerified: user.emailVerified
       },
       token: token,
-      onboardingComplete: false
+      onboardingComplete: false,
+      emailVerified: user.emailVerified
     };
   } catch (error) {
     logError('authService.registerUser', error, { code: error.code });
@@ -154,12 +172,14 @@ export const loginUser = async (email, password) => {
       user: {
         id: user.uid,
         email: user.email,
-        displayName: user.displayName
+        displayName: user.displayName,
+        emailVerified: user.emailVerified
       },
       token: token,
       onboardingComplete: profile.onboarding?.completed || false,
       isPremium: profile.subscription?.status === 'premium' || false,
-      planTier: profile.subscription?.planTier || 'free'
+      planTier: profile.subscription?.planTier || 'free',
+      emailVerified: user.emailVerified
     };
   } catch (error) {
     logError('authService.loginUser', error, { code: error.code });
@@ -214,10 +234,46 @@ export const getCurrentUser = () => {
   return auth.currentUser;
 };
 
+// Resend verification email
+export const resendVerificationEmail = async () => {
+  const configError = checkFirebaseConfig();
+  if (configError) return configError;
+
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      return createErrorResponse(ERROR_CODES.AUTH_USER_NOT_FOUND, 'No user logged in');
+    }
+
+    if (user.emailVerified) {
+      return createErrorResponse(ERROR_CODES.AUTH_INVALID_REQUEST, 'Email already verified');
+    }
+
+    await withTimeout(
+      sendEmailVerification(user, {
+        url: window.location.origin + '/login',
+        handleCodeInApp: false
+      }),
+      10000,
+      'Failed to send verification email'
+    );
+
+    return {
+      success: true,
+      message: 'Verification email sent successfully'
+    };
+  } catch (error) {
+    logError('authService.resendVerificationEmail', error, { code: error.code });
+    const errorCode = mapAuthErrorCode(error.code);
+    return createErrorResponse(errorCode, error.message);
+  }
+};
+
 export default {
   registerUser,
   loginUser,
   logoutUser,
   resetPassword,
-  getCurrentUser
+  getCurrentUser,
+  resendVerificationEmail
 };
