@@ -194,9 +194,41 @@ export const isValidBarcode = (barcode) => {
   return validLengths.includes(cleaned.length);
 };
 
+/**
+ * Search products by name and return detailed nutrition info
+ * Used by online research service
+ */
+export const searchProductsByName = async (searchTerm) => {
+  try {
+    const searchResult = await searchProducts(searchTerm, 1);
+
+    if (!searchResult.success || searchResult.data.length === 0) {
+      return [];
+    }
+
+    // Get detailed info for top 3 results
+    const detailedProducts = await Promise.all(
+      searchResult.data.slice(0, 3).map(async (product) => {
+        const detailResult = await getProductByBarcode(product.barcode);
+
+        if (detailResult.success) {
+          return detailResult.data;
+        }
+        return null;
+      })
+    );
+
+    return detailedProducts.filter(p => p !== null);
+  } catch (error) {
+    console.error('Error searching products by name:', error);
+    return [];
+  }
+};
+
 export default {
   getProductByBarcode,
   searchProducts,
+  searchProductsByName,
   getProductsByCategory,
   isValidBarcode
 };

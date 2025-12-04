@@ -10,6 +10,8 @@ const initialState = {
   isPremium: false, // Default to basic plan
   dailyScansUsed: 0,
   lastScanDate: null,
+  scanCooldownUntil: null, // Timestamp when cooldown ends
+  lastScanTimestamp: null, // Last scan timestamp for cooldown calculation
 };
 
 const authSlice = createSlice({
@@ -62,23 +64,60 @@ const authSlice = createSlice({
     },
     incrementDailyScans: (state) => {
       const today = new Date().toDateString();
+      const now = Date.now();
+
+      // Reset count if new day
       if (state.lastScanDate !== today) {
         state.dailyScansUsed = 1;
         state.lastScanDate = today;
       } else {
         state.dailyScansUsed += 1;
       }
+
+      // Calculate cooldown based on scan count (Premium users only)
+      // Basic users: 2 scans/day max (handled in component)
+      // Premium users: Progressive cooldown
+      if (state.isPremium) {
+        let cooldownSeconds = 0;
+
+        if (state.dailyScansUsed >= 26) {
+          // 26+ scans: 2 minute cooldown
+          cooldownSeconds = 120;
+        } else if (state.dailyScansUsed >= 16) {
+          // 16-25 scans: 30 second cooldown
+          cooldownSeconds = 30;
+        }
+        // 0-15 scans: No cooldown
+
+        if (cooldownSeconds > 0) {
+          state.scanCooldownUntil = now + (cooldownSeconds * 1000);
+          localStorage.setItem('scanCooldownUntil', state.scanCooldownUntil.toString());
+        } else {
+          state.scanCooldownUntil = null;
+          localStorage.removeItem('scanCooldownUntil');
+        }
+      }
+
+      state.lastScanTimestamp = now;
+
       localStorage.setItem('dailyScansUsed', state.dailyScansUsed.toString());
       localStorage.setItem('lastScanDate', state.lastScanDate);
+      localStorage.setItem('lastScanTimestamp', now.toString());
     },
     resetDailyScans: (state) => {
       const today = new Date().toDateString();
       if (state.lastScanDate !== today) {
         state.dailyScansUsed = 0;
         state.lastScanDate = today;
+        state.scanCooldownUntil = null;
         localStorage.setItem('dailyScansUsed', '0');
         localStorage.setItem('lastScanDate', today);
+        localStorage.removeItem('scanCooldownUntil');
       }
+    },
+    clearCooldown: (state) => {
+      state.scanCooldownUntil = null;
+      localStorage.removeItem('scanCooldownUntil');
     },
   },
 });
@@ -93,6 +132,7 @@ export const {
   setPremiumStatus,
   incrementDailyScans,
   resetDailyScans,
+  clearCooldown,
 } = authSlice.actions;
 
 export default authSlice.reducer;
