@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,6 @@ import {
   User,
   LogOut,
   X,
-  Lock,
   BarChart3,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -24,84 +23,68 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Compute premium status safely from localStorage
-  const isPremium = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    const tier = localStorage.getItem('planTier');
-    return tier === 'premium';
-  }, []);
-
   // Navigation items – paths aligned with App.jsx routes
+  // All features are now available to all users
   const navItems = [
     {
       path: '/',
       icon: LayoutDashboard,
       label: 'Dashboard',
       color: 'text-emerald-500',
-      premiumOnly: false,
     },
     {
       path: '/analyze',
       icon: Camera,
       label: 'Analyze Meal',
       color: 'text-cyan-500',
-      premiumOnly: false,
     },
     {
       path: '/meal-planner',
       icon: ChefHat,
       label: 'Meal Planner',
       color: 'text-purple-500',
-      premiumOnly: true, // premium only
     },
     {
       path: '/grocery-list',
       icon: ShoppingCart,
       label: 'Grocery List',
       color: 'text-green-500',
-      premiumOnly: true, // premium only
     },
     {
       path: '/goals',
       icon: Target,
       label: 'Goals',
       color: 'text-orange-500',
-      premiumOnly: false,
     },
     {
       path: '/favourites',
       icon: Heart,
       label: 'Favourites',
       color: 'text-rose-500',
-      premiumOnly: false,
     },
     {
       path: '/achievements',
       icon: Trophy,
       label: 'Achievements',
       color: 'text-amber-500',
-      premiumOnly: false,
     },
     {
       path: '/analytics',
       icon: BarChart3,
       label: 'Analytics',
       color: 'text-indigo-500',
-      premiumOnly: false,
     },
     {
       path: '/history',
       icon: HistoryIcon,
       label: 'History',
       color: 'text-blue-500',
-      premiumOnly: false,
     },
     {
       path: '/account',
       icon: User,
       label: 'Account',
       color: 'text-gray-500',
-      premiumOnly: false,
     },
   ];
 
@@ -113,19 +96,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     onClose && onClose();
   };
 
-  // Handle clicking a nav item (premium gating + closing drawer)
-  const handleNavClick = (e, item, onItemClick) => {
-    const { premiumOnly } = item;
-
-    if (premiumOnly && !isPremium) {
-      e.preventDefault();
-      toast.error('🔒 Upgrade to Premium to unlock this feature!', {
-        duration: 3000,
-        icon: '👑',
-      });
-      return;
-    }
-
+  // Handle clicking a nav item (closing drawer)
+  const handleNavClick = (onItemClick) => {
     // Close sidebar on mobile after navigation
     if (onItemClick) onItemClick();
   };
@@ -133,31 +105,25 @@ const Sidebar = ({ isOpen, onClose }) => {
   const renderNavList = (onItemClick) => (
     <nav className="flex-1 overflow-y-auto">
       <ul className="space-y-1 px-2 py-4">
-        {navItems.map(({ path, icon: Icon, label, color, premiumOnly }) => {
-          const isLocked = premiumOnly && !isPremium;
-
+        {navItems.map(({ path, icon: Icon, label, color }) => {
           return (
             <li key={path}>
               <NavLink
                 to={path}
-                onClick={(e) => handleNavClick(e, { premiumOnly }, onItemClick)}
+                onClick={() => handleNavClick(onItemClick)}
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200'
-                      : isLocked
-                      ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70'
                   }`
                 }
-                aria-disabled={isLocked ? 'true' : undefined}
               >
                 <Icon
                   size={20}
                   className={`${color} transition-colors duration-200`}
                 />
                 <span className="flex-1">{label}</span>
-                {isLocked && <Lock size={14} className="text-gray-400" />}
               </NavLink>
             </li>
           );

@@ -96,7 +96,7 @@ const Paywall = () => {
 
     // Simulate payment processing
     setTimeout(() => {
-      toast.success('🎉 Welcome to Premium! Your 14-day free trial has started!');
+      toast.success('🎉 Welcome to Nutrio! Your 14-day free trial has started!');
 
       // TODO: Implement actual payment processing and update user in Firebase
       // For now, just update Redux state
@@ -115,7 +115,7 @@ const Paywall = () => {
     const validCodes = ['ADMIN2024', 'TESTFREE', 'NUTRIOFREE'];
 
     if (validCodes.includes(promoCode.toUpperCase())) {
-      toast.success('🎉 Promo code accepted! You now have Premium access!');
+      toast.success('🎉 Promo code accepted! You now have full access!');
       dispatch(setUser({ isPremium: true }));
       setShowPromoModal(false);
       setTimeout(() => navigate('/dashboard'), 1500);
@@ -257,10 +257,10 @@ const Paywall = () => {
           </motion.div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-            Try Nutrio Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">FREE</span> for 14 Days
+            Try Nutrio <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">FREE</span> for 14 Days
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
-            Then just <span className="font-bold text-gray-900 dark:text-white">$9.99/month</span>
+            Get full access to all features for just <span className="font-bold text-gray-900 dark:text-white">$9.99/month</span>
           </p>
           <p className="text-base text-gray-500 dark:text-gray-400">
             Cancel anytime • No commitment required
@@ -400,7 +400,7 @@ const Paywall = () => {
           className="mb-8"
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-            Everything Included in Premium
+            Everything Included with Your Subscription
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {premiumFeatures.map((feature, index) => (
@@ -546,7 +546,7 @@ const Paywall = () => {
                 Restore Purchases
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                If you've previously purchased Nutrio Premium on this device, click below to restore your subscription.
+                If you've previously purchased Nutrio on this device, click below to restore your subscription.
               </p>
               <div className="flex gap-4">
                 <button

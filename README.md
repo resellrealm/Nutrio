@@ -33,16 +33,16 @@ A comprehensive nutrition tracking and meal planning application built with Reac
 - **Progress Tracking**: Average daily calories, meals logged, daily goals
 
 ### Recipe System
-- **AI-Powered Personalized Meals** (Premium):
+- **AI-Powered Personalized Meals**:
   - **72 User Categories**: Based on 6 goals × 12 dietary types
   - **7 AI-Generated Meals Per Week**: One personalized meal per day
   - **Automatic Weekly Generation**: Fresh meals every Sunday at 12pm UTC
   - **Smart Filtering**: Automatically excludes your allergens
   - **Goal-Optimized**: Nutrition tailored to your specific health goals
   - **Total: 504 AI Meals** generated weekly across all categories
-- **28 Static Backup Recipes**: Professionally crafted fallback meals (Free)
+- **28 Static Backup Recipes**: Professionally crafted fallback meals
   - 7 breakfast, 7 lunch, 7 dinner, 7 snacks
-  - Available to all users when AI meals unavailable
+  - Available when AI meals unavailable
 - **Daily Meal Recommendations**: Different recommended meal each day
 - **Nutritional Info**: Calories, protein, carbs, fat, fiber for every recipe
 - **Detailed Instructions**: Step-by-step cooking instructions
@@ -408,8 +408,8 @@ After setup, test these features to ensure everything works:
 - [ ] Adds to food log
 
 ### 6. Recipes ✓
-- [ ] Browse AI-generated personalized meals (Premium)
-- [ ] Browse 28 static recipes (Free)
+- [ ] Browse AI-generated personalized meals
+- [ ] Browse 28 static recipes
 - [ ] Create custom recipe (saves to Firestore)
 - [ ] Search recipes
 
@@ -610,24 +610,22 @@ Nutrio uses an intelligent AI-powered meal generation system that creates person
 - **Graceful Degradation**: Falls back to static recipes if AI meals unavailable
 - **Universal Access**: Static recipes available to all users
 
-## Premium vs Free Features
+## Features
 
-### 🌟 Premium Features
+All users with a Nutrio subscription get access to:
+
 - **AI Personalized Meals**: 7 AI-generated meals per week based on your goals & diet
-- **Meal Planner Access**: Full access to weekly meal planning
+- **Meal Planner**: Full access to weekly meal planning
 - **Grocery List Generation**: Auto-generate shopping lists from meal plans
-- **20 Daily AI Scans**: Analyze meal photos with AI (vs 2 for free)
+- **Unlimited AI Scans**: Analyze meal photos with AI
 - **Advanced Analytics**: Comprehensive nutrition insights and trends
-- **No Ads**: Ad-free experience
-
-### 🆓 Free Features
 - **28 Static Recipes**: Browse curated breakfast, lunch, dinner, and snacks
 - **Food Logging**: Manual entry and barcode scanning
-- **2 Daily AI Scans**: Limited meal photo analysis
-- **Dashboard**: Basic nutrition tracking and charts
+- **Dashboard**: Complete nutrition tracking and charts
 - **Goals Tracking**: Set and monitor your health goals
 - **Achievements**: Unlock achievements for consistency
 - **Custom Recipes**: Create and save your own recipes
+- **Ad-Free Experience**: Enjoy Nutrio without interruptions
 
 ## Version
 
