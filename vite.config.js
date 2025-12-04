@@ -29,7 +29,10 @@ export default defineConfig(({ mode }) => ({
             return 'ui-vendor';
           }
           // Charts library (large dependency)
-          if (id.includes('node_modules/recharts')) {
+          // Include d3 dependencies with recharts to avoid initialization issues
+          if (id.includes('node_modules/recharts') ||
+              id.includes('node_modules/d3-') ||
+              id.includes('node_modules/victory-')) {
             return 'charts-vendor';
           }
         }
@@ -38,11 +41,21 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
     sourcemap: false,
     minify: 'esbuild',
-    // Improve stability with better error recovery
-    target: 'es2015',
-    cssCodeSplit: true
+    // Use ES2020 for better module support and avoid TDZ issues
+    target: 'es2020',
+    cssCodeSplit: true,
+    // Ensure proper module preloading
+    modulePreload: {
+      polyfill: true
+    }
   },
   esbuild: {
     drop: mode === 'production' ? ['console', 'debugger'] : []
+  },
+  optimizeDeps: {
+    include: ['recharts'],
+    esbuildOptions: {
+      target: 'es2020'
+    }
   }
 }))
