@@ -56,6 +56,7 @@ const History = lazyWithRetry(() => import('./pages/History'));
 const Account = lazyWithRetry(() => import('./pages/Account'));
 const GroceryList = lazyWithRetry(() => import('./pages/GroceryList'));
 const BarcodeScanner = lazyWithRetry(() => import('./pages/BarcodeScanner'));
+const Paywall = lazyWithRetry(() => import('./pages/Paywall'));
 const Login = lazyWithRetry(() => import('./pages/Login'));
 const Register = lazyWithRetry(() => import('./pages/Register'));
 
@@ -228,6 +229,16 @@ function AppContent() {
                     <ProtectedRoute>
                       <BarcodeScanner />
                     </ProtectedRoute>
+                  }
+                />
+
+                {/* Paywall - Full Screen (Outside Layout) */}
+                <Route
+                  path="/paywall"
+                  element={
+                    <AuthRequiredRoute>
+                      <Paywall />
+                    </AuthRequiredRoute>
                   }
                 />
 

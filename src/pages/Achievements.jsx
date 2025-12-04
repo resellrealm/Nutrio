@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { motion } from 'framer-motion';
-import { Trophy, Lock, Star, Flame, TrendingUp, Target, Calendar, Utensils, Award, CheckCircle, Zap, Heart, Loader } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Lock, Star, Flame, TrendingUp, Target, Calendar, Utensils, Award, CheckCircle, Zap, Heart, Loader, Crown, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getWeeklySummary } from '../services/foodLogService';
 import { getUserGoals } from '../services/goalsService';
@@ -9,16 +10,21 @@ import {
   calculateAchievementStats,
   checkAndUpdateAchievements,
   getAchievementCounts,
+  canUnlockAchievement,
   ACHIEVEMENT_DEFINITIONS
 } from '../services/achievementsService';
 
 const Achievements = () => {
+  const navigate = useNavigate();
   const userId = useSelector(state => state.auth.user?.id);
+  const isPremium = useSelector(state => state.auth.isPremium);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [achievements, setAchievements] = useState({ unlocked: [], progress: {} });
   const [stats, setStats] = useState({});
   const [newlyUnlocked, setNewlyUnlocked] = useState([]);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
 
   const fetchAchievements = useCallback(async () => {
     setLoading(true);
@@ -70,22 +76,33 @@ const Achievements = () => {
     }
   }, [userId, fetchAchievements]);
 
-  const filteredAchievements = ACHIEVEMENT_DEFINITIONS.filter(ach =>
-    filter === 'all' ? true : ach.difficulty === filter
-  );
+  const filteredAchievements = ACHIEVEMENT_DEFINITIONS.filter(ach => {
+    if (filter === 'all') return true;
+    if (filter === 'free') return !ach.premium;
+    if (filter === 'premium') return ach.premium;
+    return ach.difficulty === filter;
+  });
 
-  const counts = getAchievementCounts(achievements.unlocked);
+  const counts = getAchievementCounts(achievements.unlocked, isPremium);
+
+  const handlePremiumAchievementClick = (achievement) => {
+    if (!isPremium && achievement.premium) {
+      setSelectedAchievement(achievement);
+      setShowPremiumModal(true);
+    }
+  };
 
   const AchievementCard = ({ achievement }) => {
     const isUnlocked = achievements.unlocked.includes(achievement.id);
     const isNewlyUnlocked = newlyUnlocked.includes(achievement.id);
+    const isPremiumLocked = achievement.premium && !isPremium;
     const progress = achievements.progress[achievement.id] || 0;
 
     // Default icon
     let IconComponent = Trophy;
 
     // Try to determine icon from achievement name
-    if (achievement.name.toLowerCase().includes('meal') || achievement.name.toLowerCase().includes('breakfast')) {
+    if (achievement.name.toLowerCase().includes('meal') || achievement.name.toLowerCase().includes('breakfast') || achievement.name.toLowerCase().includes('lunch') || achievement.name.toLowerCase().includes('dinner')) {
       IconComponent = Utensils;
     } else if (achievement.name.toLowerCase().includes('water') || achievement.name.toLowerCase().includes('hydration')) {
       IconComponent = Heart;
@@ -93,12 +110,14 @@ const Achievements = () => {
       IconComponent = Flame;
     } else if (achievement.name.toLowerCase().includes('protein') || achievement.name.toLowerCase().includes('macro')) {
       IconComponent = Target;
-    } else if (achievement.name.toLowerCase().includes('week') || achievement.name.toLowerCase().includes('calendar')) {
+    } else if (achievement.name.toLowerCase().includes('week') || achievement.name.toLowerCase().includes('calendar') || achievement.name.toLowerCase().includes('planner')) {
       IconComponent = Calendar;
     } else if (achievement.name.toLowerCase().includes('star') || achievement.name.toLowerCase().includes('recipe')) {
       IconComponent = Star;
-    } else if (achievement.name.toLowerCase().includes('goal')) {
+    } else if (achievement.name.toLowerCase().includes('goal') || achievement.name.toLowerCase().includes('scan')) {
       IconComponent = Award;
+    } else if (achievement.name.toLowerCase().includes('list') || achievement.name.toLowerCase().includes('shop')) {
+      IconComponent = CheckCircle;
     }
 
     const difficultyColors = {
@@ -110,18 +129,21 @@ const Achievements = () => {
     return (
       <motion.div
         key={achievement.id}
-        className={`rounded-xl shadow-lg overflow-hidden ${
+        onClick={() => isPremiumLocked && handlePremiumAchievementClick(achievement)}
+        className={`rounded-xl shadow-lg overflow-hidden relative ${
           isUnlocked
             ? 'bg-white dark:bg-gray-800'
             : 'bg-gray-100 dark:bg-gray-900'
-        } ${isNewlyUnlocked ? 'ring-4 ring-yellow-400' : ''}`}
-        whileHover={{ scale: 1.02 }}
+        } ${isNewlyUnlocked ? 'ring-4 ring-yellow-400' : ''} ${isPremiumLocked ? 'cursor-pointer' : ''}`}
+        whileHover={{ scale: isPremiumLocked ? 1.02 : 1.01 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: Math.min(achievement.id * 0.01, 0.5) }}
+        transition={{ delay: Math.min(ACHIEVEMENT_DEFINITIONS.indexOf(achievement) * 0.02, 0.5) }}
       >
         <div className={`h-2 bg-gradient-to-r ${difficultyColors[achievement.difficulty]}`} />
-        <div className="p-6">
+
+        {/* Main Content */}
+        <div className={`p-6 ${isPremiumLocked ? 'filter blur-sm' : ''}`}>
           <div className="flex items-start justify-between mb-3">
             <div className={`p-3 rounded-xl ${
               isUnlocked
@@ -152,7 +174,7 @@ const Achievements = () => {
           }`}>
             {achievement.description}
           </p>
-          {!isUnlocked && (
+          {!isUnlocked && !isPremiumLocked && (
             <div>
               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                 <span>Progress</span>
@@ -166,18 +188,44 @@ const Achievements = () => {
               </div>
             </div>
           )}
-          {isUnlocked && (
-            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Unlocked!
+          {isUnlocked && !isPremiumLocked && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Unlocked!
+              </div>
+              {achievement.xp && (
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  +{achievement.xp} XP
+                </span>
+              )}
             </div>
           )}
-          {isNewlyUnlocked && (
+          {isNewlyUnlocked && !isPremiumLocked && (
             <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400 font-semibold">
               ✨ NEW!
             </div>
           )}
         </div>
+
+        {/* Premium Lock Overlay */}
+        {isPremiumLocked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/60 to-black/40 backdrop-blur-sm">
+            <div className="text-center px-4">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mb-3 shadow-2xl">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+              <h4 className="text-white font-bold text-lg mb-1">Premium Only</h4>
+              <p className="text-white/90 text-sm mb-3">
+                Upgrade to unlock this achievement
+              </p>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold px-4 py-2 rounded-full hover:from-amber-600 hover:to-orange-700 transition-all">
+                <Crown className="w-4 h-4" />
+                Upgrade Now
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
     );
   };
@@ -205,30 +253,62 @@ const Achievements = () => {
         <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
           <Trophy className="w-8 h-8 mb-2" />
           <p className="text-3xl font-bold">{counts.unlocked}/{counts.total}</p>
-          <p className="text-sm opacity-90">Achievements Unlocked</p>
+          <p className="text-sm opacity-90">Total Achievements</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">Easy</span>
             <CheckCircle className="text-green-500" size={20} />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.easy}/10</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.easy}/{counts.easyTotal}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">Medium</span>
             <Star className="text-blue-500" size={20} />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.medium}/8</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.medium}/{counts.mediumTotal}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">Hard</span>
             <Award className="text-purple-500" size={20} />
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.hard}/6</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{counts.hard}/{counts.hardTotal}</p>
         </div>
       </div>
+
+      {/* Premium Stats Banner (if not premium) */}
+      {!isPremium && counts.locked > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-xl p-6 text-white shadow-xl"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Crown className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">
+                  {counts.locked} Premium Achievements Locked
+                </h3>
+                <p className="text-sm text-white/90">
+                  Upgrade to Premium to unlock all {counts.total} achievements and earn more XP!
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/paywall')}
+              className="bg-white text-amber-600 font-semibold px-6 py-3 rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+            >
+              <Crown className="w-5 h-5" />
+              Upgrade Now
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Stats Display */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-card p-6">
@@ -255,16 +335,17 @@ const Achievements = () => {
 
       {/* Filter Buttons */}
       <div className="flex gap-2 flex-wrap">
-        {['all', 'easy', 'medium', 'hard'].map(f => (
+        {['all', 'free', 'premium', 'easy', 'medium', 'hard'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
+            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
               filter === f
                 ? 'bg-emerald-500 text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
+            {f === 'premium' && <Crown className="w-4 h-4" />}
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
@@ -276,6 +357,67 @@ const Achievements = () => {
           <AchievementCard key={achievement.id} achievement={achievement} />
         ))}
       </div>
+
+      {/* Premium Modal */}
+      <AnimatePresence>
+        {showPremiumModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPremiumModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            >
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mb-4">
+                  <Crown className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Premium Achievement
+                </h3>
+                {selectedAchievement && (
+                  <div className="mb-4">
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      {selectedAchievement.name}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedAchievement.description}
+                    </p>
+                  </div>
+                )}
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  This achievement is only available to Premium members. Upgrade now to unlock all {counts.locked} premium achievements and earn more XP!
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      setShowPremiumModal(false);
+                      navigate('/paywall');
+                    }}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <Crown className="w-5 h-5" />
+                    Upgrade to Premium
+                  </button>
+                  <button
+                    onClick={() => setShowPremiumModal(false)}
+                    className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold py-3 px-6 rounded-xl transition-all"
+                  >
+                    Maybe Later
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
