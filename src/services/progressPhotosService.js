@@ -166,7 +166,7 @@ export const deleteProgressPhoto = async (photoId, userId, filename) => {
       data: { id: photoId }
     };
   } catch (error) {
-    console.error('Error deleting progress photo:', error);
+    logError('progressPhotosService.deleteProgressPhoto', error);
     const errorCode = mapFirestoreErrorCode(error);
     return createErrorResponse(errorCode);
   }

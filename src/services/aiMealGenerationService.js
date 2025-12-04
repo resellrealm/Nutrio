@@ -366,7 +366,6 @@ export const generateAllCategoryMeals = async (onProgress = null) => {
 
     } catch (error) {
       logError('aiMealGenerationService.generateAllCategoryMeals', error, { categoryId });
-      console.error(`❌ Failed to generate ${categoryId}:`, error);
       results.failed.push({ categoryId, error: error.message });
     }
   }
