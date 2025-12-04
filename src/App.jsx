@@ -44,7 +44,6 @@ const lazyWithRetry = (componentImport) => {
 
 // Lazy-loaded pages for code splitting with retry logic
 const OnboardingFlowV2 = lazyWithRetry(() => import('./components/OnboardingV2/OnboardingFlowV2'));
-const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'));
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
 const MealAnalyzer = lazyWithRetry(() => import('./pages/MealAnalyzer'));
 const MealPlanner = lazyWithRetry(() => import('./pages/MealPlanner'));
@@ -207,7 +206,7 @@ function AppContent() {
                   path="/onboarding"
                   element={
                     <AuthRequiredRoute>
-                      <Onboarding />
+                      <OnboardingFlowV2 />
                     </AuthRequiredRoute>
                   }
                 />

@@ -20,6 +20,8 @@ import {
   generateNutritionInsights
 } from '../services/smartRecommendationService';
 import { getUserGoals, calculateGoalProgress } from '../services/goalsService';
+import { getCurrentUser } from '../services/authService';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import toast from 'react-hot-toast';
 
 // Motivational quotes based on user goals
@@ -72,6 +74,7 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [todayData, setTodayData] = useState(null);
   const [weeklyData, setWeeklyData] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Derived data
   const [quoteOfDay, setQuoteOfDay] = useState('');
@@ -203,6 +206,11 @@ const Dashboard = () => {
       fetchDashboardData();
     }
   }, [userId, fetchDashboardData]);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+  }, []);
 
   const processWeeklyData = (weekly, profile) => {
     // Process weekly calories for chart
@@ -391,6 +399,14 @@ const Dashboard = () => {
           Here's your comprehensive nutrition overview
         </p>
       </motion.div>
+
+      {/* Email Verification Banner */}
+      {currentUser && !currentUser.emailVerified && (
+        <EmailVerificationBanner
+          userEmail={currentUser.email}
+          onDismiss={() => {}}
+        />
+      )}
 
       {/* Quote of the Day */}
       <motion.div
