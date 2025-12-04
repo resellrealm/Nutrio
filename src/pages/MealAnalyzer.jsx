@@ -14,17 +14,14 @@ import {
   Check,
   X,
   ScanBarcode,
-  Crown,
   ThumbsUp,
   ThumbsDown,
   Search,
   RotateCcw,
-  Zap,
-  Clock
+  Zap
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { incrementDailyScans, resetDailyScans, clearCooldown } from '../store/authSlice';
-import { MAX_DAILY_SCANS, MAX_FILE_SIZE, ERROR_MESSAGES } from '../config/constants';
+import { MAX_FILE_SIZE, ERROR_MESSAGES } from '../config/constants';
 import { analyzeMealPhoto, isGeminiConfigured } from '../services/geminiService';
 import { logFoodItem } from '../services/foodLogService';
 import onlineFoodResearchService from '../services/onlineFoodResearchService';
@@ -38,9 +35,6 @@ const generateScanId = () => {
 const MealAnalyzer = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isPremium = useSelector(state => state.auth.isPremium);
-  const dailyScansUsed = useSelector(state => state.auth.dailyScansUsed);
-  const scanCooldownUntil = useSelector(state => state.auth.scanCooldownUntil);
   const userId = useSelector(state => state.auth.user?.id);
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -55,32 +49,7 @@ const MealAnalyzer = () => {
   const [scanMode, setScanMode] = useState('meal'); // 'meal' or 'barcode'
   const [servingsConsumed, setServingsConsumed] = useState(1);
   const [selectedMealType, setSelectedMealType] = useState('lunch');
-  const [cooldownTimeLeft, setCooldownTimeLeft] = useState(0);
   const [currentScanId, setCurrentScanId] = useState(null);
-
-  // Cooldown timer
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (scanCooldownUntil) {
-        const timeLeft = scanCooldownUntil - Date.now();
-        if (timeLeft <= 0) {
-          setCooldownTimeLeft(0);
-          dispatch(clearCooldown());
-        } else {
-          setCooldownTimeLeft(Math.ceil(timeLeft / 1000));
-        }
-      } else {
-        setCooldownTimeLeft(0);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [scanCooldownUntil, dispatch]);
-
-  useEffect(() => {
-    // Reset scans if it's a new day
-    dispatch(resetDailyScans());
-  }, [dispatch]);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -112,49 +81,8 @@ const MealAnalyzer = () => {
     }
   };
 
-  const canScanMeal = () => {
-    if (scanMode === 'barcode') return { allowed: true };
-
-    // Check cooldown (Premium users only)
-    if (isPremium && cooldownTimeLeft > 0) {
-      return {
-        allowed: false,
-        reason: 'cooldown',
-        timeLeft: cooldownTimeLeft
-      };
-    }
-
-    // Free users: 2 scans/day max
-    if (!isPremium && dailyScansUsed >= MAX_DAILY_SCANS) {
-      return {
-        allowed: false,
-        reason: 'limit_reached'
-      };
-    }
-
-    return { allowed: true };
-  };
-
   const analyzeMeal = async () => {
-    const scanCheck = canScanMeal();
-
-    // Check scan limits
-    if (!scanCheck.allowed) {
-      if (scanCheck.reason === 'cooldown') {
-        const minutes = Math.floor(scanCheck.timeLeft / 60);
-        const seconds = scanCheck.timeLeft % 60;
-        toast.error(`Quick cooldown! Next scan ready in ${minutes}:${seconds.toString().padStart(2, '0')}`, {
-          duration: 3000,
-          icon: '⏱️',
-        });
-      } else if (scanCheck.reason === 'limit_reached') {
-        toast.error(`Daily limit reached! Upgrade to Premium for unlimited scans.`, {
-          duration: 4000,
-          icon: '🔒',
-        });
-      }
-      return;
-    }
+    // All users have unlimited scans
 
     // Check if Gemini is configured
     if (!isGeminiConfigured() && scanMode === 'meal') {
@@ -173,11 +101,6 @@ const MealAnalyzer = () => {
     // Generate scan ID
     const scanId = generateScanId();
     setCurrentScanId(scanId);
-
-    // Increment scan count for meal scans (not barcode)
-    if (scanMode === 'meal') {
-      dispatch(incrementDailyScans());
-    }
 
     try {
       if (scanMode === 'barcode') {
