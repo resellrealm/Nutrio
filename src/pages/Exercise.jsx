@@ -18,6 +18,7 @@ import {
   deleteExercise,
   EXERCISE_TYPES
 } from '../services/exerciseService';
+import { logError } from '../utils/errorLogger';
 
 const Exercise = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -84,7 +85,7 @@ const Exercise = () => {
         setWeeklyChartData(chartData);
       }
     } catch (error) {
-      console.error('Error fetching exercise data:', error);
+      logError('Exercise.fetchData', error);
       toast.error('Failed to load exercise data');
     } finally {
       setLoading(false);

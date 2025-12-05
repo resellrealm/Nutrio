@@ -12,6 +12,7 @@ import {
   deleteProgressPhoto,
   getProgressSummary
 } from '../services/progressPhotosService';
+import { logError } from '../utils/errorLogger';
 
 const ProgressPhotos = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -56,7 +57,7 @@ const ProgressPhotos = () => {
         setSummary(summaryResult.data);
       }
     } catch (error) {
-      console.error('Error fetching progress photos:', error);
+      logError('ProgressPhotos.fetchData', error);
       toast.error('Failed to load progress photos');
     } finally {
       setLoading(false);

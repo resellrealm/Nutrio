@@ -6,6 +6,7 @@
 
 import { BUILT_IN_RECIPES, getCompatibleRecipes } from './recipeService';
 import { DEFAULT_CALORIE_TARGET, DEFAULT_PROTEIN_TARGET } from '../config/constants';
+import { logWarning } from '../utils/errorLogger';
 
 /**
  * Analyze nutritional gaps based on today's intake vs goals
@@ -242,7 +243,7 @@ export const getPersonalizedMealOfTheDay = (todayIntake, userProfile) => {
 
   if (compatibleRecipes.length === 0) {
     // Fallback if no compatible recipes
-    console.warn('No compatible recipes found for user preferences');
+    logWarning('smartRecommendationService.getSmartRecommendation', 'No compatible recipes found for user preferences');
     const randomIndex = Math.floor(Math.random() * BUILT_IN_RECIPES.length);
     return {
       meal: BUILT_IN_RECIPES[randomIndex],

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Bell, Check, X, Sparkles, Zap, Trophy, Target } from 'lucide-react';
 import { requestNotificationPermission } from '../../services/notificationsService';
 import toast from 'react-hot-toast';
+import { logError } from '../../utils/errorLogger';
 
 const NotificationPermission = ({ onContinue, onSkip }) => {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -24,7 +25,7 @@ const NotificationPermission = ({ onContinue, onSkip }) => {
         setTimeout(() => onContinue({ notificationsEnabled: false }), 1000);
       }
     } catch (error) {
-      console.error('Notification permission error:', error);
+      logError('NotificationPermission.handleEnableNotifications', error);
       toast.error('Failed to request notifications');
     } finally {
       setIsRequesting(false);

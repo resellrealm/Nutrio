@@ -8,6 +8,7 @@ import { registerUser } from '../services/authService';
 import { setCredentials, setOnboardingComplete, setPremiumStatus } from '../store/authSlice';
 import { isFirebaseConfigured } from '../config/firebase';
 import { updatePremiumStatus } from '../services/userService';
+import { logError } from '../utils/errorLogger';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -110,7 +111,7 @@ const Register = () => {
         toast.error(result.error || 'Failed to create account');
       }
     } catch (error) {
-      console.error('Registration exception:', error);
+      logError('Register.handleRegister', error);
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

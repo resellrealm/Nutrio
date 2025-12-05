@@ -31,6 +31,7 @@ import Step20Summary from './Step20Summary';
 import { updateOnboardingProgress, completeOnboarding, calculateAllMetrics } from '../../services/userService';
 import { nextStep, previousStep, saveProgress, completeOnboarding as completeOnboardingRedux, setStep, setEditingFromReview } from '../../store/onboardingSlice';
 import { setOnboardingComplete } from '../../store/authSlice';
+import { logError } from '../../utils/errorLogger';
 
 const OnboardingFlowV2 = () => {
   const navigate = useNavigate();
@@ -121,11 +122,11 @@ const OnboardingFlowV2 = () => {
       if (result.success) {
         dispatch(saveProgress());
       } else {
-        console.error('Failed to save progress:', result.error);
+        logError('OnboardingFlowV2.handleSaveProgress', result.error);
         // Don't show error toast for background saves to avoid annoying user
       }
     } catch (error) {
-      console.error('Failed to save progress:', error);
+      logError('OnboardingFlowV2.handleSaveProgress', error);
     } finally {
       setIsSaving(false);
     }
@@ -190,7 +191,7 @@ const OnboardingFlowV2 = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Onboarding completion error:', error);
+      logError('OnboardingFlowV2.handleCompleteOnboarding', error);
       toast.error(error.message || 'Failed to complete onboarding. Please try again.');
     } finally {
       setIsCompleting(false);

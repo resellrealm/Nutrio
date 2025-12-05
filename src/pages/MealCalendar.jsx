@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getDailyTotals } from '../services/foodLogService';
+import { logError } from '../utils/errorLogger';
 
 const MealCalendar = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -92,7 +93,7 @@ const MealCalendar = () => {
       setCalendarDays(days);
       setMealData(dataMap);
     } catch (error) {
-      console.error('Error fetching month data:', error);
+      logError('MealCalendar.fetchMonthData', error);
       toast.error('Failed to load calendar data');
     } finally {
       setLoading(false);

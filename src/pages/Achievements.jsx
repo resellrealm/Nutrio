@@ -11,6 +11,7 @@ import {
   getAchievementCounts,
   ACHIEVEMENT_DEFINITIONS
 } from '../services/achievementsService';
+import { logError } from '../utils/errorLogger';
 
 const Achievements = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -57,7 +58,7 @@ const Achievements = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching achievements:', error);
+      logError('Achievements.fetchAchievements', error);
       toast.error('Failed to load achievements');
     } finally {
       setLoading(false);

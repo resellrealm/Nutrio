@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import { getDailyTotals, exportToCSV } from '../services/foodLogService';
 import { getUserGoals } from '../services/goalsService';
+import { logError } from '../utils/errorLogger';
 
 const Analytics = () => {
   const user = useSelector(state => state.user);
@@ -115,7 +116,7 @@ const Analytics = () => {
       setComparisonData(comparison);
 
     } catch (error) {
-      console.error('Error loading analytics:', error);
+      logError('Analytics.loadData', error);
       toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
@@ -252,7 +253,7 @@ const Analytics = () => {
         toast.error(result.error || 'Export failed');
       }
     } catch (error) {
-      console.error('Error exporting data:', error);
+      logError('Analytics.handleExport', error);
       toast.error('Failed to export data');
     }
   };

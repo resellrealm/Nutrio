@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { getProductByBarcode, isValidBarcode } from '../services/openFoodFactsService';
 import { logFoodItem } from '../services/foodLogService';
+import { logError } from '../utils/errorLogger';
 
 /**
  * Barcode Scanner Component
@@ -83,7 +84,7 @@ const BarcodeScanner = () => {
         document.body.classList.remove('scanner-active');
 
       } catch (error) {
-        console.error('Scanning error:', error);
+        logError('BarcodeScanner.startScanning', error);
         toast.error('Failed to start camera');
         setIsScanning(false);
       }
