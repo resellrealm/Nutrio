@@ -1,4 +1,5 @@
 import openFoodFactsService from './openFoodFactsService';
+import { logError } from '../utils/errorLogger';
 
 /**
  * Service for researching food items online to enhance AI accuracy
@@ -26,7 +27,7 @@ class OnlineFoodResearchService {
 
       return enhancedResult;
     } catch (error) {
-      console.error('Error researching food online:', error);
+      logError('onlineFoodResearchService.researchFood', error);
       // Return original result if research fails
       return {
         ...aiResult,
@@ -61,7 +62,7 @@ class OnlineFoodResearchService {
 
       return null;
     } catch (error) {
-      console.error('Open Food Facts search failed:', error);
+      logError('onlineFoodResearchService.searchOpenFoodFacts', error);
       return null;
     }
   }
@@ -164,7 +165,7 @@ class OnlineFoodResearchService {
         nutrition: totalNutrition
       };
     } catch (error) {
-      console.error('Ingredient estimation failed:', error);
+      logError('onlineFoodResearchService.estimateIngredientNutrition', error);
       return null;
     }
   }

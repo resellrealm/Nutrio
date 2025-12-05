@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db, isFirebaseFullyInitialized } from '../config/firebase';
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
-import { logError } from '../utils/errorLogger';
+import { logError, logInfo, logWarning } from '../utils/errorLogger';
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -329,9 +329,9 @@ export const generateAllCategoryMeals = async (onProgress = null) => {
   const totalCategories = allCategories.length;
   let completedCategories = 0;
 
-  console.log(`🚀 Starting weekly meal generation for Week ${weekNumber}`);
-  console.log(`📊 Generating ${totalCategories} categories × 7 meals = ${totalCategories * 7} total meals`);
-  console.log(`💰 Cost savings: 75% vs old 28-meal system`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Starting weekly meal generation for Week ${weekNumber}`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Generating ${totalCategories} categories × 7 meals = ${totalCategories * 7} total meals`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Cost savings: 75% vs old 28-meal system`);
 
   const results = {
     success: [],
@@ -343,7 +343,7 @@ export const generateAllCategoryMeals = async (onProgress = null) => {
     const dietaryType = dietaryTypeParts.join('_'); // Handle dietary types with underscores (e.g., "gluten_free")
 
     try {
-      console.log(`\n🔄 Generating ${categoryId}... (${completedCategories + 1}/${totalCategories})`);
+      logInfo('aiMealGenerationService.generateAllCategories', `Generating ${categoryId}... (${completedCategories + 1}/${totalCategories})`);
 
       const meals = await generateWeeklyMeals(goal, dietaryType, (progress) => {
         if (onProgress) {
@@ -361,7 +361,7 @@ export const generateAllCategoryMeals = async (onProgress = null) => {
       results.success.push(categoryId);
       completedCategories++;
 
-      console.log(`✅ Completed ${categoryId} (${completedCategories}/${totalCategories})`);
+      logInfo('aiMealGenerationService.generateAllCategories', `Completed ${categoryId} (${completedCategories}/${totalCategories})`);
 
     } catch (error) {
       logError('aiMealGenerationService.generateAllCategoryMeals', error, { categoryId });
@@ -369,9 +369,9 @@ export const generateAllCategoryMeals = async (onProgress = null) => {
     }
   }
 
-  console.log(`\n🎉 Weekly generation complete!`);
-  console.log(`✅ Success: ${results.success.length}`);
-  console.log(`❌ Failed: ${results.failed.length}`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Weekly generation complete!`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Success: ${results.success.length}`);
+  logInfo('aiMealGenerationService.generateAllCategories', `Failed: ${results.failed.length}`);
 
   return results;
 };
@@ -390,7 +390,7 @@ export const getMealsForUser = async (userProfile) => {
 
   // If no meals found, return null (will fallback to static recipes)
   if (!meals) {
-    console.warn(`No AI meals found for ${categoryId} in week ${weekNumber}`);
+    logWarning('aiMealGenerationService.getMealsForCategory', `No AI meals found for ${categoryId} in week ${weekNumber}`);
     return null;
   }
 

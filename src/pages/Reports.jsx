@@ -15,6 +15,7 @@ import { getWeeklySummary } from '../services/foodLogService';
 import { getUserGoals } from '../services/goalsService';
 import { getWeeklySummary as getExerciseWeeklySummary } from '../services/exerciseService';
 import { getWeeklySummary as getWaterWeeklySummary } from '../services/waterService';
+import { logError } from '../utils/errorLogger';
 
 const Reports = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -70,7 +71,7 @@ const Reports = () => {
         setGoals(goalsResult.data);
       }
     } catch (error) {
-      console.error('Error fetching report data:', error);
+      logError('Reports.fetchData', error);
       toast.error('Failed to load report data');
     } finally {
       setLoading(false);

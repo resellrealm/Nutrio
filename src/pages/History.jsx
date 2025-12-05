@@ -20,6 +20,7 @@ import { auth } from '../config/firebase';
 import { getFoodLogByDateRange, deleteFoodLogEntry, updateFoodLogEntry } from '../services/foodLogService';
 import toast from 'react-hot-toast';
 import { format, startOfDay, endOfDay, subDays, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { logError } from '../utils/errorLogger';
 
 const History = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,7 +66,7 @@ const History = () => {
         setMealHistory([]);
       }
     } catch (error) {
-      console.error('Error fetching meal history:', error);
+      logError('History.fetchMealHistory', error);
       toast.error('Failed to load meal history');
       setMealHistory([]);
     } finally {
@@ -205,7 +206,7 @@ const History = () => {
         toast.error('Failed to delete meal');
       }
     } catch (error) {
-      console.error('Error deleting meal:', error);
+      logError('History.handleDeleteMeal', error);
       toast.error('An error occurred while deleting meal');
     }
   };
@@ -251,7 +252,7 @@ const History = () => {
         toast.error('Failed to update meal');
       }
     } catch (error) {
-      console.error('Error updating meal:', error);
+      logError('History.handleSaveEdit', error);
       toast.error('An error occurred while updating meal');
     }
   };

@@ -196,7 +196,7 @@ const MealAnalyzer = () => {
         setIsAnalyzing(false);
       }
     } catch (error) {
-      console.error('Error analyzing meal:', error);
+      logError('MealAnalyzer.handleAnalyzeMeal', error);
       toast.error('An error occurred during analysis');
       setIsAnalyzing(false);
       setAnalysisStage('');
@@ -284,7 +284,7 @@ const MealAnalyzer = () => {
           hadOnlineResearch: analysisResult.onlineResearchAttempted || false
         });
       } catch (error) {
-        console.error('Failed to submit feedback:', error);
+        logError('MealAnalyzer.handleNegativeFeedback', error);
       }
     }
   };
@@ -362,7 +362,7 @@ const MealAnalyzer = () => {
             hadOnlineResearch: analysisResult.onlineResearchAttempted || false
           });
         } catch (error) {
-          console.error('Failed to submit positive feedback:', error);
+          logError('MealAnalyzer.handleSaveToLog', error);
         }
       }
 
@@ -383,7 +383,7 @@ const MealAnalyzer = () => {
         toast.error(result.error || 'Failed to save meal');
       }
     } catch (error) {
-      console.error('Error saving meal:', error);
+      logError('MealAnalyzer.handleSaveToLog', error);
       toast.error('An error occurred while saving meal');
     }
   };

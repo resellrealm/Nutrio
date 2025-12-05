@@ -10,6 +10,7 @@ import {
   mapFirestoreErrorCode,
   createErrorResponse
 } from '../utils/errorCodes';
+import { logWarning } from '../utils/errorLogger';
 
 // Helper to check if Firestore is available
 const checkFirestoreConfig = () => {
@@ -144,12 +145,12 @@ export const requestNotificationPermission = async () => {
  */
 export const sendBrowserNotification = (title, options = {}) => {
   if (!('Notification' in window)) {
-    console.warn('Browser does not support notifications');
+    logWarning('notificationsService.sendBrowserNotification', 'Browser does not support notifications');
     return null;
   }
 
   if (Notification.permission !== 'granted') {
-    console.warn('Notification permission not granted');
+    logWarning('notificationsService.sendBrowserNotification', 'Notification permission not granted');
     return null;
   }
 

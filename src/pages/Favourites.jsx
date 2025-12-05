@@ -32,6 +32,7 @@ import {
   BUILT_IN_RECIPES
 } from '../services/recipeService';
 import { logFoodItem } from '../services/foodLogService';
+import { logError } from '../utils/errorLogger';
 
 const Favourites = () => {
   const user = useSelector(state => state.user);
@@ -67,7 +68,7 @@ const Favourites = () => {
         setFavourites([...result.data.custom, ...result.data.builtIn.slice(0, 10)]); // Show 10 built-in recipes
       }
     } catch (error) {
-      console.error('Error loading recipes:', error);
+      logError('Favourites.loadRecipes', error);
       toast.error('Failed to load recipes');
     } finally {
       setLoading(false);
@@ -156,7 +157,7 @@ const Favourites = () => {
         toast.error(result.error || 'Failed to add to food log');
       }
     } catch (error) {
-      console.error('Error adding to today:', error);
+      logError('Favourites.handleAddToToday', error);
       toast.error('Failed to add recipe to food log');
     }
   };
@@ -173,7 +174,7 @@ const Favourites = () => {
         toast.error(result.error || 'Failed to save recipe');
       }
     } catch (error) {
-      console.error('Error saving recipe:', error);
+      logError('Favourites.handleSaveRecipe', error);
       toast.error('Failed to save recipe');
     }
   };

@@ -8,6 +8,7 @@ import { loginUser } from '../services/authService';
 import { setCredentials, setOnboardingComplete, setPremiumStatus } from '../store/authSlice';
 import { isFirebaseConfigured } from '../config/firebase';
 import { updatePremiumStatus } from '../services/userService';
+import { logError } from '../utils/errorLogger';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -101,7 +102,7 @@ const Login = () => {
         toast.error(result.error || 'Failed to login');
       }
     } catch (error) {
-      console.error('Login exception:', error);
+      logError('Login.handleLogin', error);
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

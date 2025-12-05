@@ -34,6 +34,7 @@ import {
   calculateGoalProgress,
   getWeeklyGoalAdherence
 } from '../services/goalsService';
+import { logError } from '../utils/errorLogger';
 
 const Goals = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -164,7 +165,7 @@ const Goals = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching goals data:', error);
+      logError('Goals.fetchData', error);
       toast.error('Failed to load goals data');
     } finally {
       setLoading(false);
@@ -200,7 +201,7 @@ const Goals = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Error saving goals:', error);
+      logError('Goals.handleSaveGoals', error);
       toast.error('Failed to save goals');
     } finally {
       setSaving(false);

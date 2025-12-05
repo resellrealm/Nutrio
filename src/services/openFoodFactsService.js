@@ -143,7 +143,7 @@ export const searchProducts = async (searchTerm, page = 1) => {
       page: response.data.page
     };
   } catch (error) {
-    console.error('Error searching products:', error);
+    logError('openFoodFactsService.searchProducts', error);
     return handleApiError(error);
   }
 };
@@ -172,7 +172,7 @@ export const getProductsByCategory = async (category) => {
       data: products
     };
   } catch (error) {
-    console.error('Error getting products by category:', error);
+    logError('openFoodFactsService.getProductsByCategory', error);
     return handleApiError(error);
   }
 };
@@ -221,7 +221,7 @@ export const searchProductsByName = async (searchTerm) => {
 
     return detailedProducts.filter(p => p !== null);
   } catch (error) {
-    console.error('Error searching products by name:', error);
+    logError('openFoodFactsService.searchProductsByName', error);
     return [];
   }
 };

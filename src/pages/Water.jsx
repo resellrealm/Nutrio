@@ -16,6 +16,7 @@ import {
   decrementWater,
   getWeeklySummary
 } from '../services/waterService';
+import { logError } from '../utils/errorLogger';
 
 const Water = () => {
   const userId = useSelector(state => state.auth.user?.id);
@@ -80,7 +81,7 @@ const Water = () => {
         setWeeklyChartData(chartData);
       }
     } catch (error) {
-      console.error('Error fetching water data:', error);
+      logError('Water.fetchData', error);
       toast.error('Failed to load water tracking data');
     } finally {
       setLoading(false);

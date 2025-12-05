@@ -4,6 +4,7 @@ import {
   ERROR_CODES,
   handleStorageError
 } from './errorCodes';
+import { logError } from './errorLogger';
 
 // Tailwind CSS class merger
 export function cn(...inputs) {
@@ -199,7 +200,7 @@ export const storage = {
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
       const errorInfo = handleStorageError(error);
-      console.error(`Storage get error for key "${key}":`, errorInfo.error);
+      logError('helpers.getFromStorage', errorInfo.error, { key });
       return defaultValue;
     }
   },
@@ -209,7 +210,7 @@ export const storage = {
       return { success: true };
     } catch (error) {
       const errorInfo = handleStorageError(error);
-      console.error(`Storage set error for key "${key}":`, errorInfo.error);
+      logError('helpers.saveToStorage', errorInfo.error, { key });
       return errorInfo;
     }
   },
@@ -219,7 +220,7 @@ export const storage = {
       return { success: true };
     } catch (error) {
       const errorInfo = handleStorageError(error);
-      console.error(`Storage remove error for key "${key}":`, errorInfo.error);
+      logError('helpers.removeFromStorage', errorInfo.error, { key });
       return errorInfo;
     }
   },
@@ -229,7 +230,7 @@ export const storage = {
       return { success: true };
     } catch (error) {
       const errorInfo = handleStorageError(error);
-      console.error('Storage clear error:', errorInfo.error);
+      logError('helpers.clearStorage', errorInfo.error);
       return errorInfo;
     }
   },

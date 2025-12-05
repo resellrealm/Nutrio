@@ -31,6 +31,7 @@ import { getUserProfile, updateUserProfile, uploadProfilePhoto, deleteProfilePho
 import { getWeeklySummary, exportToCSV } from '../services/foodLogService';
 import { getUserRecipes } from '../services/recipeService';
 import { getUserAchievements } from '../services/achievementsService';
+import { logError } from '../utils/errorLogger';
 
 // Helper components defined outside of Account
 const SettingSection = ({ title, children }) => (
@@ -128,7 +129,7 @@ const Account = () => {
           toast.error('Failed to load profile data');
         }
       } catch (error) {
-        console.error('Error loading profile:', error);
+        logError('Account.loadProfile', error);
         toast.error('Failed to load profile');
       } finally {
         setIsLoading(false);
@@ -167,7 +168,7 @@ const Account = () => {
         }));
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logError('Account.loadStats', error);
     }
   };
 
@@ -240,7 +241,7 @@ const Account = () => {
         toast.error(result.error || 'Failed to update profile');
       }
     } catch (error) {
-      console.error('Error saving profile:', error);
+      logError('Account.handleSaveProfile', error);
       toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
@@ -262,7 +263,7 @@ const Account = () => {
         toast.error(result.error || 'Failed to upload photo');
       }
     } catch (error) {
-      console.error('Photo upload error:', error);
+      logError('Account.handlePhotoUpload', error);
       toast.error('Failed to upload photo');
     } finally {
       setIsUploadingPhoto(false);
@@ -286,7 +287,7 @@ const Account = () => {
         toast.error(result.error || 'Failed to delete photo');
       }
     } catch (error) {
-      console.error('Photo delete error:', error);
+      logError('Account.handlePhotoDelete', error);
       toast.error('Failed to delete photo');
     } finally {
       setIsUploadingPhoto(false);
@@ -329,7 +330,7 @@ const Account = () => {
 
       toast.success('All data exported successfully!');
     } catch (error) {
-      console.error('Error exporting data:', error);
+      logError('Account.handleExportAllData', error);
       toast.error('Failed to export data');
     }
   };
@@ -368,7 +369,7 @@ const Account = () => {
         toast.error(result.error || 'Failed to export food logs');
       }
     } catch (error) {
-      console.error('Error exporting food logs:', error);
+      logError('Account.handleExportFoodLogs', error);
       toast.error('Failed to export food logs');
     }
   };
